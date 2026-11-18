@@ -1,0 +1,25 @@
+{
+  "name": "matematika",
+  "version": "1.0.0",
+  "private": true,
+  "description": "მათემატიკა 1–12 — MERN learning platform: React client, Express + MongoDB API, Google Sheets mirror.",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "dev:demo": "concurrently -k -n api,web -c blue,magenta \"npm run demo -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client",
+    "start": "npm start -w server",
+    "demo": "npm run build && npm run demo -w server",
+    "test": "npm test -w server && npm test -w client",
+    "extract-content": "node tools/extract-content.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  },
+  "engines": {
+    "node": ">=20.12"
+  }
+}

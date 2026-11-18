@@ -1,0 +1,398 @@
+/*
+ * The printed page: lesson text, labelled boxes, proofs, figures and tables of the curriculum HTML,
+ * plus problem statements. Overrides the ported legacy rules (legacy-content.css) with the textbook look.
+ */
+
+/* ---------- reading text ---------- */
+.mx .sec.lesson-body {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--typeface-serif);
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+.mx .sec.lesson-body > :first-child {
+  margin-top: 0;
+}
+.mx .sec p {
+  max-width: none;
+  margin: 0 0 1em;
+  line-height: inherit;
+}
+.mx .sec b,
+.mx .sec strong {
+  font-weight: 650;
+}
+.mx .sec h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 2.75rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--typeface-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.25;
+  scroll-margin-top: calc(var(--header-height) + 1.25rem);
+}
+.mx .sec h4::before {
+  content: "§";
+  flex: none;
+  font-family: var(--typeface-display);
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--accent);
+}
+.mx .sec h5 {
+  margin: 1.75rem 0 0.6rem;
+  font-size: 1.1875rem;
+  font-weight: 600;
+}
+.mx .sec ul,
+.mx .sec ol {
+  margin: 0.25rem 0 1.1em;
+  padding-left: 1.5rem;
+}
+.mx .sec ul {
+  list-style: none;
+}
+.mx .sec ul > li {
+  position: relative;
+}
+.mx .sec ul > li::before {
+  content: "–";
+  position: absolute;
+  left: -1.15rem;
+  color: var(--accent);
+}
+.mx .sec ol {
+  list-style: decimal;
+}
+.mx .sec ol > li::marker {
+  font-family: var(--typeface-display);
+  color: var(--accent);
+}
+.mx .sec li {
+  margin: 0.35em 0;
+}
+.mx .sec code {
+  padding: 0.05em 0.35em;
+  font-family: var(--typeface-mono);
+  font-size: 0.85em;
+  background: var(--surface-2);
+  border: 0;
+  border-radius: 3px;
+}
+.mx .sec a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  text-underline-offset: 0.2em;
+}
+.mx .sec a:hover {
+  color: var(--accent);
+}
+
+/* ---------- labelled boxes ---------- */
+.mx .dl,
+.mx .el,
+.mx .nl,
+.mx .kl {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.55rem;
+  font-family: var(--typeface-sans);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: 0.045em;
+  text-transform: none;
+}
+/* the ported styles put an icon before every label; the printed page uses a few marks instead */
+.mx .dl::before,
+.mx .el::before {
+  content: none;
+}
+.mx .nl::before,
+.mx .kl::before {
+  -webkit-mask-image: none;
+  mask-image: none;
+  margin-right: 0;
+  vertical-align: middle;
+}
+.mx .def,
+.mx .note,
+.mx .ex,
+.mx .key {
+  box-shadow: none;
+}
+
+/* definition: vermilion rule in the margin */
+.mx .def {
+  margin: 1.9rem 0;
+  padding: 0.15rem 0 0.15rem 1.35rem;
+  background: none;
+  border: 0;
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+}
+.mx .dl {
+  color: var(--accent);
+}
+
+/* example: indented under a dashed rule, the label set like a run-in heading */
+.mx .ex {
+  margin: 1.6rem 0;
+  padding: 0.15rem 0 0.15rem 1.35rem;
+  background: none;
+  border: 0;
+  border-left: 1px dashed var(--border-strong);
+  border-radius: 0;
+}
+.mx .el {
+  color: var(--muted-foreground);
+}
+.mx .el::after {
+  content: "";
+  width: 1.75rem;
+  border-top: 1px solid var(--border-strong);
+}
+
+/* note: a margin note — sans, smaller, on sunken paper */
+.mx .note {
+  margin: 1.6rem 0;
+  padding: 0.9rem 1.15rem;
+  font-family: var(--typeface-sans);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+  background: var(--surface-2);
+  border: 0;
+  border-radius: var(--r-m);
+}
+.mx .note .nl {
+  color: var(--foreground);
+}
+.mx .note .nl::before {
+  content: "¶";
+  width: auto;
+  height: auto;
+  background: none;
+  font-family: var(--typeface-display);
+  font-size: 1.15rem;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+.mx .def p:last-child,
+.mx .note p:last-child,
+.mx .ex p:last-child,
+.mx .key p:last-child {
+  margin-bottom: 0;
+}
+
+/* key formula / rule: highlighter */
+.mx .key {
+  margin: 1.9rem 0;
+  padding: 1rem 1.35rem 1.05rem;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--highlight) 62%, var(--surface));
+  border: 0;
+  border-left: 3px solid var(--highlight-strong);
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+}
+.mx .key .kl {
+  color: var(--foreground);
+}
+.mx .key .kl::before {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--accent-decor);
+}
+.mx .key .dm math {
+  color: var(--foreground);
+}
+.mx .key.res {
+  margin: 1.1rem 0 0;
+  padding: 0.7rem 1rem;
+}
+
+/* ---------- display / inline math ---------- */
+.mx .dm {
+  padding: 0.45rem 0;
+}
+.mx .dm math {
+  font-size: 1.18em;
+}
+.mx .im {
+  white-space: nowrap;
+}
+
+/* ---------- proofs ---------- */
+.mx .proof {
+  margin: 1.4rem 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+.mx .proof > summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 0;
+  font-family: var(--typeface-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+}
+.mx .proof > summary::before {
+  content: "";
+  position: static;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1.75px solid currentColor;
+  border-bottom: 1.75px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--primitive-duration-fast) ease-out;
+}
+.mx .proof[open] > summary::before {
+  transform: rotate(45deg) translate(-1px, -2px);
+}
+.mx .proof > summary:hover {
+  color: var(--accent-hover);
+  background: none;
+  transform: none;
+}
+.mx .proof > summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.mx .proof .pb {
+  padding: 0.35rem 0 1.1rem 1.35rem;
+  border-top: 0;
+  border-left: 1px solid var(--border-strong);
+  margin-bottom: 0.9rem;
+}
+.mx .proof .pb::after {
+  content: "∎";
+  display: block;
+  margin-top: 0.4rem;
+  text-align: right;
+  color: var(--muted-foreground);
+}
+.mx .proof .pb > p:first-child {
+  margin-top: 0.35rem;
+}
+
+/* ---------- tables: book rules ---------- */
+.mx .tw {
+  margin: 1.6rem 0;
+}
+.mx .tw table {
+  min-width: 0;
+  margin-inline: auto;
+  font-family: var(--typeface-sans);
+  font-size: 0.9375rem;
+  border-collapse: collapse;
+  border-top: 1.5px solid var(--rule-ink);
+  border-bottom: 1.5px solid var(--rule-ink);
+}
+.mx .tw th,
+.mx .tw td {
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+}
+.mx .tw tr:last-child > th,
+.mx .tw tr:last-child > td {
+  border-bottom: 0;
+}
+.mx .tw thead th,
+.mx .tw thead td {
+  background: none;
+  font-weight: 650;
+  border-bottom: 1px solid var(--rule-ink);
+}
+.mx .tw tbody th {
+  background: none;
+  font-weight: 600;
+}
+
+/* ---------- figures ---------- */
+.mx .fig {
+  margin: 2rem 0;
+}
+.mx .fig figcaption {
+  margin-top: 0.6rem;
+  font-family: var(--typeface-sans);
+  font-size: 0.8125rem;
+  font-style: normal;
+  color: var(--subtle-foreground);
+}
+.mx .fig .tx {
+  font-family: var(--typeface-mathtext);
+}
+.mx .fig .hl {
+  stroke: var(--highlight-strong);
+}
+
+/* ---------- problem statements, answers and solutions ---------- */
+.mx-inline {
+  font-family: var(--typeface-serif);
+}
+.mx-inline p {
+  margin: 0 0 0.6rem;
+}
+.mx-inline p:last-child {
+  margin-bottom: 0;
+}
+.mx-inline .dm {
+  padding: 0.35rem 0;
+  overflow-x: auto;
+  text-align: center;
+}
+.mx-inline .dm math {
+  font-size: 1.15em;
+}
+.mx-inline math {
+  font-size: 1.08em;
+}
+.mx-inline .fig {
+  margin: 0.75rem 0;
+}
+.mx-inline .tw {
+  margin: 0.6rem 0;
+  overflow-x: auto;
+}
+.mx-inline img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* exam figures are scanned line drawings: keep them on white in dark mode */
+.ex-figure img {
+  background: #fff;
+  border-radius: var(--r-s);
+  padding: 0.5rem;
+}
+
+/* ---------- interactive boards ---------- */
+.mx .toolpage {
+  font-family: var(--typeface-sans);
+}
+.mx .toolpage .gg-canvas,
+.mx .toolpage canvas {
+  border-radius: var(--r-m);
+}

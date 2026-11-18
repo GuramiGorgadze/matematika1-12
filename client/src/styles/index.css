@@ -1,0 +1,339 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./legacy-content.css";
+@import "./content.css";
+
+/*
+ * მათემატიკა v2 — "Textbook".
+ * Paper and ink, one spot colour (vermilion), a highlighter for key formulas, thin rules, serif headings.
+ * Web fonts are self-hosted (imported in main.jsx); STIX Two Math is a trimmed copy that keeps its MATH table.
+ */
+
+@font-face {
+  font-family: "STIX Two Math";
+  src: url("../assets/fonts/STIXTwoMath-Regular.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* class-based dark mode (toggled on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* design tokens → Tailwind utilities (bg-surface, text-accent, font-serif, shadow-md, rounded-lg …) */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-rule-ink: var(--rule-ink);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+  --color-chart-1: var(--chart-1);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-foreground: var(--accent-soft-foreground);
+  --color-accent-decor: var(--accent-decor);
+
+  --color-highlight: var(--highlight);
+  --color-highlight-strong: var(--highlight-strong);
+  --color-highlight-foreground: var(--highlight-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+
+  --color-stage-1: var(--stage-1);
+  --color-stage-1-fill: var(--stage-1-fill);
+  --color-stage-1-soft: var(--stage-1-soft);
+  --color-stage-2: var(--stage-2);
+  --color-stage-2-fill: var(--stage-2-fill);
+  --color-stage-2-soft: var(--stage-2-soft);
+  --color-stage-3: var(--stage-3);
+  --color-stage-3-fill: var(--stage-3-fill);
+  --color-stage-3-soft: var(--stage-3-soft);
+
+  --font-sans: var(--typeface-sans);
+  --font-serif: var(--typeface-serif);
+  --font-display: var(--typeface-display);
+  --font-math: var(--typeface-math);
+  --font-mathtext: var(--typeface-mathtext);
+  --font-mono: var(--typeface-mono);
+
+  --radius-xs: var(--primitive-radius-xs);
+  --radius-sm: var(--primitive-radius-sm);
+  --radius-md: var(--primitive-radius-md);
+  --radius-lg: var(--primitive-radius-lg);
+  --radius-xl: var(--primitive-radius-xl);
+
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+
+  --ease-out: var(--primitive-easing-out);
+  --ease-in-out: var(--primitive-easing-in-out);
+  --animate-fade: fade-in 0.2s ease-out both;
+  --animate-rise: rise 0.42s var(--primitive-easing-out) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+@keyframes sheet-in-right {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+@keyframes sheet-in-left {
+  from {
+    transform: translateX(-32px);
+    opacity: 0;
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* ---------- variables read by the lesson HTML and the interactive boards (legacy-content.css) ---------- */
+:root {
+  --bg: var(--background);
+  --fg: var(--foreground);
+  --muted: var(--muted-foreground);
+  --line: var(--border);
+  --grid: color-mix(in srgb, var(--border) 75%, transparent);
+  --accent-fg: var(--accent-foreground);
+  --key: var(--highlight-foreground);
+  --key-bg: var(--highlight);
+  --key-line: var(--highlight-strong);
+  --font-ui: var(--typeface-sans);
+  --font-math: var(--typeface-math);
+  --shadow: var(--elevation-sm);
+  --r-s: 4px;
+  --r-m: 6px;
+  --r-l: 10px;
+  --ease: var(--primitive-easing-out);
+  /* figure / board colours: the printer's four inks */
+  --c1: #2b4e96;
+  --c2: #b83d19;
+  --c3: #2e7a4c;
+  --c4: #a15c07;
+  --geo: #7a2e5c;
+}
+.dark {
+  --c1: #8ea8e8;
+  --c2: #f08559;
+  --c3: #74c493;
+  --c4: #e8b45a;
+  --geo: #d88bbe;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--header-height) + 1.25rem);
+    font-synthesis-weight: none;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--typeface-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--typeface-serif);
+    font-weight: 600;
+    line-height: 1.22;
+    text-wrap: balance;
+    /* Georgian has long words and no browser hyphenation: break only a word that cannot fit */
+    overflow-wrap: anywhere;
+  }
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: var(--highlight);
+    color: var(--highlight-foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  button,
+  [role="button"],
+  summary,
+  label[for],
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  math {
+    font-family: var(--typeface-math);
+  }
+  hr {
+    border-color: var(--border);
+  }
+}
+
+@layer components {
+  /* small letter-spaced label, like a textbook's running head
+     (Chromium does not map Georgian to Mtavruli with text-transform, so labels stay in Mkhedruli) */
+  .eyebrow {
+    font-family: var(--typeface-sans);
+    font-size: 0.78125rem;
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: 0.045em;
+  }
+  /* body link: ink text, vermilion underline */
+  .link {
+    text-decoration-line: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 0.22em;
+    transition:
+      color var(--primitive-duration-fast) ease-out,
+      text-decoration-color var(--primitive-duration-fast) ease-out;
+  }
+  .link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+  /* highlighter stroke behind inline text */
+  .marker {
+    background-image: linear-gradient(100deg, transparent 0.15em, var(--highlight) 0.3em, var(--highlight) calc(100% - 0.3em), transparent calc(100% - 0.15em));
+    background-size: 100% 72%;
+    background-position: 0 72%;
+    background-repeat: no-repeat;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    padding-inline: 0.12em;
+  }
+  /* dotted leader between a title and a number, as in a table of contents */
+  .leader {
+    flex: 1 1 auto;
+    min-width: 1.5rem;
+    align-self: flex-end;
+    margin-bottom: 0.42em;
+    border-bottom: 1.5px dotted var(--border-strong);
+  }
+  /* heavy-light-heavy rules of a printed table */
+  .book-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-top: var(--rule-heavy) solid var(--rule-ink);
+    border-bottom: var(--rule-heavy) solid var(--rule-ink);
+  }
+  .book-table thead th {
+    border-bottom: 1px solid var(--rule-ink);
+  }
+  .book-table tbody tr + tr {
+    border-top: 1px solid var(--border);
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .measure {
+    max-width: var(--measure);
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .rule-double {
+    border-top: 3px double var(--rule-ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  header,
+  footer,
+  nav,
+  aside,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

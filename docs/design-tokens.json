@@ -1,0 +1,256 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "$description": "მათემატიკა v2 'Textbook' design tokens. Three layers: primitive (raw values) → semantic (purpose, with a dark-theme override set) → component. Generated into client/src/styles/tokens.css by the design-system skill's generate-tokens.cjs; never edit the CSS by hand.",
+  "primitive": {
+    "color": {
+      "white": { "$value": "#FFFFFF", "$type": "color" },
+      "paper": {
+        "50": { "$value": "#FFFDF9", "$type": "color" },
+        "100": { "$value": "#F9F6F0", "$type": "color" },
+        "200": { "$value": "#F2EDE3", "$type": "color" },
+        "300": { "$value": "#EAE3D6", "$type": "color" },
+        "400": { "$value": "#E3DBCD", "$type": "color" },
+        "500": { "$value": "#CDC2AF", "$type": "color" }
+      },
+      "ink": {
+        "100": { "$value": "#EEE8DD", "$type": "color" },
+        "200": { "$value": "#BDB4A6", "$type": "color" },
+        "300": { "$value": "#9C9385", "$type": "color" },
+        "400": { "$value": "#6B645A", "$type": "color" },
+        "500": { "$value": "#57514A", "$type": "color" },
+        "600": { "$value": "#4A443A", "$type": "color" },
+        "700": { "$value": "#36312A", "$type": "color" },
+        "750": { "$value": "#2D2820", "$type": "color" },
+        "800": { "$value": "#242019", "$type": "color" },
+        "850": { "$value": "#1D1A16", "$type": "color" },
+        "900": { "$value": "#15130F", "$type": "color" }
+      },
+      "vermilion": {
+        "100": { "$value": "#FBE6DC", "$type": "color" },
+        "300": { "$value": "#F6B497", "$type": "color" },
+        "400": { "$value": "#F08559", "$type": "color" },
+        "500": { "$value": "#E2582B", "$type": "color" },
+        "600": { "$value": "#B83D19", "$type": "color" },
+        "700": { "$value": "#93331A", "$type": "color" },
+        "950": { "$value": "#3A2016", "$type": "color" }
+      },
+      "marker": {
+        "200": { "$value": "#FCE38A", "$type": "color" },
+        "300": { "$value": "#F5CF4F", "$type": "color" },
+        "800": { "$value": "#6B5713", "$type": "color" },
+        "900": { "$value": "#4A3C0C", "$type": "color" }
+      },
+      "green": {
+        "100": { "$value": "#E3F0E6", "$type": "color" },
+        "300": { "$value": "#9AD9B1", "$type": "color" },
+        "400": { "$value": "#74C493", "$type": "color" },
+        "600": { "$value": "#2E7A4C", "$type": "color" },
+        "700": { "$value": "#1F5E39", "$type": "color" },
+        "950": { "$value": "#17291E", "$type": "color" }
+      },
+      "crimson": {
+        "100": { "$value": "#F8E1E5", "$type": "color" },
+        "300": { "$value": "#F5A9B6", "$type": "color" },
+        "400": { "$value": "#F08A9C", "$type": "color" },
+        "600": { "$value": "#B4233E", "$type": "color" },
+        "700": { "$value": "#8F1C33", "$type": "color" },
+        "950": { "$value": "#331A1F", "$type": "color" }
+      },
+      "amber": {
+        "100": { "$value": "#FBEDD3", "$type": "color" },
+        "300": { "$value": "#F0C77E", "$type": "color" },
+        "400": { "$value": "#E8B45A", "$type": "color" },
+        "600": { "$value": "#A15C07", "$type": "color" },
+        "700": { "$value": "#7A4405", "$type": "color" },
+        "950": { "$value": "#33260F", "$type": "color" }
+      },
+      "ochre": {
+        "100": { "$value": "#F6EAD3", "$type": "color" },
+        "400": { "$value": "#E2B15B", "$type": "color" },
+        "500": { "$value": "#C9922E", "$type": "color" },
+        "700": { "$value": "#8C5A0E", "$type": "color" },
+        "950": { "$value": "#2E2414", "$type": "color" }
+      },
+      "cobalt": {
+        "100": { "$value": "#E3E9F6", "$type": "color" },
+        "300": { "$value": "#8EA8E8", "$type": "color" },
+        "400": { "$value": "#6F8FDC", "$type": "color" },
+        "500": { "$value": "#3D63B8", "$type": "color" },
+        "550": { "$value": "#4E6FC4", "$type": "color" },
+        "700": { "$value": "#2B4E96", "$type": "color" },
+        "950": { "$value": "#1A2133", "$type": "color" }
+      },
+      "plum": {
+        "100": { "$value": "#F1E2EC", "$type": "color" },
+        "300": { "$value": "#D88BBE", "$type": "color" },
+        "500": { "$value": "#93407A", "$type": "color" },
+        "550": { "$value": "#A34C8A", "$type": "color" },
+        "700": { "$value": "#7A2E5C", "$type": "color" },
+        "950": { "$value": "#2C1A26", "$type": "color" }
+      }
+    },
+    "radius": {
+      "xs": { "$value": "2px", "$type": "dimension" },
+      "sm": { "$value": "4px", "$type": "dimension" },
+      "md": { "$value": "6px", "$type": "dimension" },
+      "lg": { "$value": "10px", "$type": "dimension" },
+      "xl": { "$value": "14px", "$type": "dimension" }
+    },
+    "duration": {
+      "fast": { "$value": "120ms", "$type": "duration" },
+      "normal": { "$value": "200ms", "$type": "duration" },
+      "slow": { "$value": "320ms", "$type": "duration" }
+    },
+    "easing": {
+      "out": { "$value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "$type": "cubicBezier" },
+      "in-out": { "$value": "cubic-bezier(0.65, 0, 0.35, 1)", "$type": "cubicBezier" }
+    }
+  },
+  "semantic": {
+    "background": { "$value": "{primitive.color.paper.100}", "$description": "the page: warm paper" },
+    "foreground": { "$value": "{primitive.color.ink.850}", "$description": "ink" },
+    "surface": { "$value": "{primitive.color.paper.50}", "$description": "raised paper: inputs, panels, dialogs" },
+    "surface-2": { "$value": "{primitive.color.paper.200}", "$description": "sunken paper: sidebar, table heads" },
+    "surface-3": { "$value": "{primitive.color.paper.300}", "$description": "hover on sunken paper" },
+    "muted-foreground": { "$value": "{primitive.color.ink.500}", "$description": "secondary text, 7.3:1" },
+    "subtle-foreground": { "$value": "{primitive.color.ink.400}", "$description": "tertiary text and captions, 5.4:1" },
+    "border": { "$value": "{primitive.color.paper.400}", "$description": "hairline rule" },
+    "border-strong": { "$value": "{primitive.color.paper.500}", "$description": "control outlines, emphasised rules" },
+    "rule-ink": { "$value": "{primitive.color.ink.850}", "$description": "heavy book rules (table top/bottom, chapter openers)" },
+
+    "primary": { "$value": "{primitive.color.ink.850}", "$description": "primary button: ink" },
+    "primary-hover": { "$value": "{primitive.color.ink.700}" },
+    "primary-foreground": { "$value": "{primitive.color.paper.100}" },
+
+    "accent": { "$value": "{primitive.color.vermilion.600}", "$description": "the spot colour: links, numerals, active marks, main CTA" },
+    "accent-hover": { "$value": "{primitive.color.vermilion.700}" },
+    "accent-foreground": { "$value": "{primitive.color.white}" },
+    "accent-soft": { "$value": "{primitive.color.vermilion.100}" },
+    "accent-soft-foreground": { "$value": "{primitive.color.vermilion.700}" },
+    "accent-decor": { "$value": "{primitive.color.vermilion.500}", "$description": "decorative marks only (dots, figure points) — never text" },
+    "ring": { "$value": "{primitive.color.vermilion.600}" },
+
+    "highlight": { "$value": "{primitive.color.marker.200}", "$description": "highlighter band behind key formulas; text stays ink" },
+    "highlight-strong": { "$value": "{primitive.color.marker.300}" },
+    "highlight-foreground": { "$value": "{primitive.color.ink.850}" },
+
+    "success": { "$value": "{primitive.color.green.600}" },
+    "success-foreground": { "$value": "{primitive.color.green.700}" },
+    "success-soft": { "$value": "{primitive.color.green.100}" },
+    "danger": { "$value": "{primitive.color.crimson.600}" },
+    "danger-foreground": { "$value": "{primitive.color.crimson.700}" },
+    "danger-soft": { "$value": "{primitive.color.crimson.100}" },
+    "warning": { "$value": "{primitive.color.amber.600}" },
+    "warning-foreground": { "$value": "{primitive.color.amber.700}" },
+    "warning-soft": { "$value": "{primitive.color.amber.100}" },
+
+    "stage-1": { "$value": "{primitive.color.ochre.700}", "$description": "grades 1–6 · ochre volume" },
+    "stage-1-fill": { "$value": "{primitive.color.ochre.500}" },
+    "stage-1-soft": { "$value": "{primitive.color.ochre.100}" },
+    "stage-2": { "$value": "{primitive.color.cobalt.700}", "$description": "grades 7–9 · cobalt volume" },
+    "stage-2-fill": { "$value": "{primitive.color.cobalt.500}" },
+    "stage-2-soft": { "$value": "{primitive.color.cobalt.100}" },
+    "stage-3": { "$value": "{primitive.color.plum.700}", "$description": "grades 10–12 · plum volume" },
+    "stage-3-fill": { "$value": "{primitive.color.plum.500}" },
+    "stage-3-soft": { "$value": "{primitive.color.plum.100}" },
+
+    "chart-1": { "$value": "{primitive.color.cobalt.500}", "$description": "single-series charts; validated with the dataviz checks" },
+    "overlay": { "$value": "rgb(21 19 15 / 0.42)" },
+
+    "typeface-serif": { "$value": "\"Noto Serif Georgian Variable\", \"Noto Serif Georgian\", \"STIX Two Text Variable\", Georgia, serif" },
+    "typeface-sans": { "$value": "\"Noto Sans Georgian Variable\", \"Noto Sans Georgian\", system-ui, -apple-system, \"Segoe UI\", sans-serif" },
+    "typeface-display": { "$value": "\"Noto Serif Display Variable\", \"Noto Serif Georgian Variable\", Georgia, serif" },
+    "typeface-math": { "$value": "\"STIX Two Math\", \"STIX Two Text Variable\", math, serif" },
+    "typeface-mathtext": { "$value": "\"STIX Two Text Variable\", \"Noto Serif Georgian Variable\", Georgia, serif" },
+    "typeface-mono": { "$value": "ui-monospace, \"SF Mono\", Menlo, Consolas, monospace" },
+
+    "elevation-xs": { "$value": "0 1px 0 rgb(29 26 22 / 0.04)" },
+    "elevation-sm": { "$value": "0 1px 2px rgb(29 26 22 / 0.06), 0 1px 1px rgb(29 26 22 / 0.03)" },
+    "elevation-md": { "$value": "0 8px 20px -8px rgb(29 26 22 / 0.14), 0 2px 4px -2px rgb(29 26 22 / 0.06)" },
+    "elevation-lg": { "$value": "0 28px 56px -18px rgb(29 26 22 / 0.24), 0 8px 16px -8px rgb(29 26 22 / 0.10)" }
+  },
+  "dark": {
+    "semantic": {
+      "background": { "$value": "{primitive.color.ink.900}" },
+      "foreground": { "$value": "{primitive.color.ink.100}" },
+      "surface": { "$value": "{primitive.color.ink.850}" },
+      "surface-2": { "$value": "{primitive.color.ink.800}" },
+      "surface-3": { "$value": "{primitive.color.ink.750}" },
+      "muted-foreground": { "$value": "{primitive.color.ink.200}" },
+      "subtle-foreground": { "$value": "{primitive.color.ink.300}" },
+      "border": { "$value": "{primitive.color.ink.700}" },
+      "border-strong": { "$value": "{primitive.color.ink.600}" },
+      "rule-ink": { "$value": "{primitive.color.ink.200}" },
+
+      "primary": { "$value": "{primitive.color.ink.100}" },
+      "primary-hover": { "$value": "{primitive.color.white}" },
+      "primary-foreground": { "$value": "{primitive.color.ink.900}" },
+
+      "accent": { "$value": "{primitive.color.vermilion.400}" },
+      "accent-hover": { "$value": "{primitive.color.vermilion.300}" },
+      "accent-foreground": { "$value": "{primitive.color.ink.900}" },
+      "accent-soft": { "$value": "{primitive.color.vermilion.950}" },
+      "accent-soft-foreground": { "$value": "{primitive.color.vermilion.300}" },
+      "accent-decor": { "$value": "{primitive.color.vermilion.500}" },
+      "ring": { "$value": "{primitive.color.vermilion.400}" },
+
+      "highlight": { "$value": "{primitive.color.marker.900}" },
+      "highlight-strong": { "$value": "{primitive.color.marker.800}" },
+      "highlight-foreground": { "$value": "{primitive.color.ink.100}" },
+
+      "success": { "$value": "{primitive.color.green.400}" },
+      "success-foreground": { "$value": "{primitive.color.green.300}" },
+      "success-soft": { "$value": "{primitive.color.green.950}" },
+      "danger": { "$value": "{primitive.color.crimson.400}" },
+      "danger-foreground": { "$value": "{primitive.color.crimson.300}" },
+      "danger-soft": { "$value": "{primitive.color.crimson.950}" },
+      "warning": { "$value": "{primitive.color.amber.400}" },
+      "warning-foreground": { "$value": "{primitive.color.amber.300}" },
+      "warning-soft": { "$value": "{primitive.color.amber.950}" },
+
+      "stage-1": { "$value": "{primitive.color.ochre.400}" },
+      "stage-1-fill": { "$value": "{primitive.color.ochre.500}" },
+      "stage-1-soft": { "$value": "{primitive.color.ochre.950}" },
+      "stage-2": { "$value": "{primitive.color.cobalt.300}" },
+      "stage-2-fill": { "$value": "{primitive.color.cobalt.550}" },
+      "stage-2-soft": { "$value": "{primitive.color.cobalt.950}" },
+      "stage-3": { "$value": "{primitive.color.plum.300}" },
+      "stage-3-fill": { "$value": "{primitive.color.plum.550}" },
+      "stage-3-soft": { "$value": "{primitive.color.plum.950}" },
+
+      "chart-1": { "$value": "{primitive.color.cobalt.400}" },
+      "overlay": { "$value": "rgb(0 0 0 / 0.6)" },
+
+      "elevation-xs": { "$value": "0 1px 0 rgb(0 0 0 / 0.3)" },
+      "elevation-sm": { "$value": "0 1px 2px rgb(0 0 0 / 0.4)" },
+      "elevation-md": { "$value": "0 10px 24px -10px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4)" },
+      "elevation-lg": { "$value": "0 30px 60px -20px rgb(0 0 0 / 0.75), 0 8px 18px -8px rgb(0 0 0 / 0.5)" }
+    }
+  },
+  "component": {
+    "header-height": { "$value": "3.5rem" },
+    "sidebar-width": { "$value": "18.5rem" },
+    "rail-width": { "$value": "14rem" },
+    "content-max": { "$value": "80rem" },
+    "measure": { "$value": "44rem", "$description": "reading column ≈ 68 characters of 18 px serif" },
+    "control-height": { "$value": "2.75rem", "$description": "44 px touch target" },
+    "control-height-sm": { "$value": "2.25rem" },
+    "control-radius": { "$value": "{primitive.radius.md}" },
+    "panel-radius": { "$value": "{primitive.radius.lg}" },
+    "dialog-radius": { "$value": "{primitive.radius.xl}" },
+    "tag-radius": { "$value": "{primitive.radius.sm}" },
+    "rule-width": { "$value": "1px" },
+    "rule-heavy": { "$value": "1.5px" },
+    "panel-bg": { "$value": "var(--surface)" },
+    "panel-border": { "$value": "var(--border)" },
+    "button-primary-bg": { "$value": "var(--primary)" },
+    "button-primary-bg-hover": { "$value": "var(--primary-hover)" },
+    "button-accent-bg": { "$value": "var(--accent)" },
+    "input-bg": { "$value": "var(--surface)" },
+    "input-border": { "$value": "var(--border-strong)" },
+    "input-border-focus": { "$value": "var(--accent)" },
+    "sidebar-bg": { "$value": "var(--surface-2)" },
+    "key-bg": { "$value": "var(--highlight)" },
+    "key-fg": { "$value": "var(--highlight-foreground)" }
+  }
+}

@@ -1,0 +1,27 @@
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/cn";
+
+/* „მ." — Noto Serif Georgian Bold მ (outlined, so it renders without the web font) + a vermilion full stop */
+const GLYPH_D =
+  "M299 -13Q217 -13 160.5 19.5Q104 52 75.5 115.0Q47 178 47 270Q47 351 68.5 409.5Q90 468 134.5 499.5Q179 531 248 531Q304 531 338.5 510.0Q373 489 394 456H399Q398 479 397.0 508.0Q396 537 396 559V603Q396 636 386.0 660.5Q376 685 355.0 698.5Q334 712 300 712Q258 712 236.0 689.5Q214 667 214 633Q214 625 215.0 615.5Q216 606 220 598Q203 592 184.5 590.0Q166 588 150 588Q122 588 105.0 597.5Q88 607 80.0 621.5Q72 636 72 651Q72 687 101.5 714.5Q131 742 182.5 757.5Q234 773 300 773Q379 773 434.5 747.5Q490 722 519.0 671.5Q548 621 548 545V270Q548 178 519.5 114.5Q491 51 435.5 19.0Q380 -13 299 -13ZM298 50Q357 50 376.5 102.0Q396 154 396 262Q396 316 388.0 360.5Q380 405 358.0 431.5Q336 458 295 458Q261 458 240.5 434.5Q220 411 211.0 367.0Q202 323 202 261Q202 154 223.5 102.0Q245 50 298 50Z";
+
+/** the monogram on an ink plate; colours follow the theme (paper plate in dark mode) */
+export function LogoMark({ className, title }) {
+  return (
+    <svg viewBox="0 0 64 64" className={cn("size-8 shrink-0", className)} role={title ? "img" : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
+      <rect width="64" height="64" rx="12" fill="var(--foreground)" />
+      <path transform="translate(10.59 52.31) scale(0.05344 -0.05344)" fill="var(--background)" d={GLYPH_D} />
+      <circle cx="46.87" cy="48.11" r="4.2" fill="var(--accent-decor)" />
+    </svg>
+  );
+}
+
+/** mark + wordmark, linking home */
+export function Logo({ className, compact = false }) {
+  return (
+    <Link to="/" className={cn("group flex items-center gap-2.5 rounded-md", className)} aria-label="მათემატიკა — მთავარი გვერდი">
+      <LogoMark className="size-8 transition-transform duration-200 ease-out group-hover:-rotate-3" />
+      {!compact && <span className="font-serif text-[1.1875rem] font-semibold leading-none tracking-tight">მათემატიკა</span>}
+    </Link>
+  );
+}

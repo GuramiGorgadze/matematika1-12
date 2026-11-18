@@ -1,0 +1,392 @@
+/* Ported from the original single-file app by the CSS port step: rules for lesson content,
+   SVG figures, tables, MathML and the interactive boards, scoped under .mx.
+   Colors come from the legacy variables defined in theme.css (mapped to design tokens). */
+
+/* Layout: squared-notebook ground, one centered column. Home is a single grid of 12 grade cards
+   (3 / 4 / 6 columns); a grade page is a heading plus two panels (rules and problems).
+   Grades listed in TOOL_GRADES also get a graph and geometry board below the panels. */
+
+.mx .gg-canvas:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* top bar */
+
+/* home */
+
+/* grade page */
+
+/* graph and geometry board */
+.mx .tools { margin-top: 48px; }
+.mx .tools h2 { margin: 0 0 6px; font-size: clamp(1.4rem, 3.5vw, 1.8rem); line-height: 1.3; }
+.mx .tools-lead { margin: 0 0 20px; max-width: 64ch; color: var(--muted); }
+.mx .gg { display: flex; flex-direction: column; gap: 12px; }
+.mx .gg-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.mx .gg-bar .grp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mx .tb {
+  font: inherit; font-size: .875rem; font-weight: 500; line-height: 1.4;
+  padding: 7px 12px; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+  transition: border-color .15s, background-color .15s;
+}
+.mx .tb:hover:not(:disabled) { border-color: var(--accent); }
+.mx .tb[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.mx .tb:disabled { opacity: .45; cursor: default; }
+.mx .snap { display: inline-flex; align-items: center; gap: 6px; font-size: .875rem; color: var(--muted); cursor: pointer; }
+
+.mx .gg-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 900px) { .mx .gg-main { grid-template-columns: minmax(0, 1fr) 300px; } }
+.mx .gg-board { position: relative; min-width: 0; }
+.mx .gg-canvas {
+  display: block; width: 100%; height: 400px; touch-action: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+}
+@media (min-width: 720px) { .mx .gg-canvas { height: 520px; } }
+.mx .gg-zoom { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 6px; }
+.mx .zb {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  font: inherit; font-size: 1.2rem; line-height: 1; color: var(--fg);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+}
+.mx .zb:hover { border-color: var(--accent); }
+
+.mx .gg-side { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.mx .gg-side h3 { margin: 0 0 8px; font-size: 1rem; }
+.mx .fn + .fn { margin-top: 8px; }
+.mx .fn-row { display: flex; align-items: center; gap: 8px; }
+.mx .fn-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; }
+.mx .fn-lbl { flex: none; font-family: var(--font-math); font-size: 1.05rem; color: var(--muted); }
+.mx .fn-in {
+  flex: 1; min-width: 0; padding: 6px 10px;
+  font: inherit; font-family: var(--font-math); font-size: 1.05rem; color: var(--fg);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+}
+.mx .fn-in[aria-invalid="true"] { border-color: var(--danger); }
+.mx .fn-del {
+  flex: none; width: 30px; height: 30px; font: inherit; font-size: 1.2rem; line-height: 1;
+  color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 8px; cursor: pointer;
+}
+.mx .fn-del:hover { color: var(--fg); border-color: var(--line); }
+.mx .fn-err { margin: 4px 0 0 20px; font-size: .8rem; color: var(--danger); }
+.mx .addf { margin-top: 10px; }
+.mx .objs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: .9rem; }
+.mx .objs li {
+  padding: 6px 10px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; overflow-wrap: anywhere;
+}
+.mx .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mx .chips + .objs, .mx .objs + .chips { margin-top: 8px; }
+.mx .chip {
+  padding: 2px 10px; font-family: var(--font-math); font-size: .9rem;
+  background: var(--accent-soft); border-radius: 999px;
+}
+.mx .muted { margin: 0; color: var(--muted); font-size: .9rem; }
+.mx .gg-hint { margin: 0; min-height: 1.6em; color: var(--muted); font-size: .9rem; }
+.mx .tg-read { margin: 0; min-height: 1.6em; color: var(--fg); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.mx .grp-lbl { font-size: .875rem; color: var(--muted); }
+
+.mx .ext { margin-top: 32px; }
+.mx .ext h3 { margin: 0 0 4px; font-size: 1.1rem; }
+.mx .ext p { margin: 0 0 12px; color: var(--muted); font-size: .95rem; }
+.mx .ext-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 640px) { .mx .ext-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mx .ext-card {
+  display: flex; flex-direction: column; gap: 2px; padding: 14px 16px;
+  color: inherit; text-decoration: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  transition: border-color .15s, background-color .15s;
+}
+.mx .ext-card:hover { border-color: var(--accent); background: var(--accent-soft); }
+.mx .ext-card strong { font-size: 1.05rem; }
+.mx .ext-card span { color: var(--muted); font-size: .9rem; }
+
+/* ---- chapter: rules and formulas ---- */
+
+.mx .sec { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; scroll-margin-top: 16px; min-width: 0; }
+.mx .sec > h3 { margin: 0 0 16px; display: flex; align-items: baseline; gap: 12px; font-size: clamp(1.25rem, 3.4vw, 1.6rem); line-height: 1.3; }
+.mx .sec h4 { margin: 28px 0 10px; font-size: 1.1rem; line-height: 1.35; }
+.mx .sec p { margin: 0 0 12px; line-height: 1.8; max-width: 74ch; }
+.mx .sec p.muted { color: var(--muted); font-size: .9rem; }
+.mx .sec code { padding: 1px 6px; font-size: .9em; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+
+.mx math { font-family: "Noto Sans Math", math, "Cambria Math", "STIX Two Text", serif; font-size: 1.15em; }
+.mx .dm { overflow-x: auto; padding: 6px 0; text-align: center; max-width: 100%; }
+.mx .dm math { font-size: 1.25em; }
+
+.mx .def, .mx .note, .mx .ex { margin: 16px 0; padding: 14px 18px; border-radius: 10px; min-width: 0; }
+.mx .def { background: var(--accent-soft); border: 1px solid var(--accent); }
+.mx .note { background: var(--bg); border: 1px dashed var(--muted); }
+.mx .ex { background: var(--bg); border: 1px solid var(--line); }
+.mx .dl, .mx .nl, .mx .el, .mx .kl { margin: 0 0 6px; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.mx .dl { color: var(--accent); }
+.mx .nl, .mx .el { color: var(--muted); }
+.mx .def p:last-child, .mx .note p:last-child, .mx .ex p:last-child { margin-bottom: 0; }
+
+.mx .key { margin: 16px 0; padding: 12px 18px; color: var(--key); background: var(--key-bg); border: 1px solid var(--key-line); border-radius: 10px; min-width: 0; }
+.mx .key .kl { color: var(--key); }
+.mx .key .dm { padding: 2px 0; }
+.mx .key p.kt { color: var(--fg); margin-bottom: 8px; }
+.mx .key.res { margin: 14px 0 0; }
+
+.mx .proof { margin: 14px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); min-width: 0; }
+.mx .proof > summary {
+  position: relative; padding: 10px 16px 10px 36px; cursor: pointer; font-weight: 700; font-size: .95rem; color: var(--accent);
+  list-style: none; display: block; line-height: 1.5;
+}
+.mx .proof > summary::-webkit-details-marker { display: none; }
+.mx .proof > summary::before { content: "▸"; position: absolute; left: 16px; top: 10px; transition: transform .15s; }
+.mx .proof[open] > summary::before { transform: rotate(90deg); }
+.mx .proof > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
+.mx .proof .pb { padding: 4px 18px 18px; border-top: 1px solid var(--line); }
+.mx .proof .pb > p:first-child { margin-top: 12px; }
+
+.mx .tw { margin: 14px 0; overflow-x: auto; max-width: 100%; }
+.mx .tw table { border-collapse: collapse; min-width: 100%; font-size: .95rem; }
+.mx .tw th, .mx .tw td { padding: 8px 12px; text-align: center; vertical-align: middle; border: 1px solid var(--line); }
+.mx .tw thead th, .mx .tw thead td { background: var(--bg); font-weight: 700; }
+.mx .tw tbody th { background: var(--bg); text-align: left; font-weight: 700; }
+.mx .tw td.pos { color: var(--c3); font-weight: 800; font-size: 1.2rem; }
+.mx .tw td.neg { color: var(--c2); font-weight: 800; font-size: 1.2rem; }
+.mx .tw td.nd { color: var(--muted); }
+.mx .tw .vals td, .mx .tw .vals th { padding: 6px 10px; }
+
+.mx .fig { margin: 16px 0; }
+.mx .fig .sw { overflow-x: auto; }
+.mx .fig svg { display: block; width: 100%; height: auto; }
+.mx .fig.wide svg { min-width: 520px; }
+.mx .fig.small svg { max-width: 420px; margin-inline: auto; }
+.mx .fig figcaption { margin-top: 6px; text-align: center; font-size: .85rem; color: var(--muted); }
+.mx .fig .ax { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+.mx .fig .gr { stroke: var(--line); stroke-width: 1; fill: none; }
+.mx .fig .as { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 4; fill: none; opacity: .8; }
+.mx .fig .fr { stroke: var(--line); stroke-width: 1; fill: none; }
+.mx .fig .ci { stroke: var(--fg); stroke-width: 1.6; fill: none; }
+.mx .fig .rd { stroke: var(--fg); stroke-width: 1.6; fill: none; }
+.mx .fig .ang { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+.mx .fig .hl { stroke: var(--key); stroke-width: 4; fill: none; }
+.mx .fig .pt { fill: var(--fg); }
+.mx .fig .poly { fill: var(--accent-soft); stroke: var(--fg); stroke-width: 1.6; }
+.mx .fig .s1, .mx .fig .cv { stroke: var(--c1); stroke-width: 3.2; fill: none; }
+.mx .fig .s2, .mx .fig .cv2 { stroke: var(--c2); stroke-width: 3.2; fill: none; }
+.mx .fig .s3, .mx .fig .cv3 { stroke: var(--c3); stroke-width: 3.2; fill: none; }
+.mx .fig .cv4 { stroke: var(--c4); stroke-width: 3.2; fill: none; }
+.mx .fig .cv, .mx .fig .cv2, .mx .fig .cv3, .mx .fig .cv4 { stroke-width: 2.6; }
+.mx .fig .tx { fill: var(--fg); font: italic 15px "STIX Two Text", "Times New Roman", serif; }
+.mx .fig .tm { fill: var(--muted); font: 12px "Noto Sans Georgian", system-ui, sans-serif; }
+.mx .fig .t1 { fill: var(--c1); } .mx .fig .t2 { fill: var(--c2); } .mx .fig .t3 { fill: var(--c3); } .mx .fig .t4 { fill: var(--key); }
+
+.mx .cheat { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 800px) { .mx .cheat { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mx .cg { padding: 10px 16px; min-width: 0; background: var(--key-bg); border: 1px solid var(--key-line); border-radius: 10px; color: var(--key); }
+.mx .cg h5 { margin: 4px 0 2px; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+.mx .cg .dm math { font-size: 1.1em; }
+.mx .sec .cg p { max-width: none; }
+.mx .im { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: middle; }
+
+/* ============ polish: tokens, home, grade header, chapter layout ============ */
+.mx .tb { min-height: 44px; }
+.mx .tb { display: inline-flex; align-items: center; }
+.mx .zb { width: 40px; height: 40px; }
+
+/* top bar */
+
+/* home hero */
+
+/* stages and grade cards */
+
+/* grade page header */
+
+/* panels, sections and cards share one elevation */
+.mx .sec, .mx .ext-card { box-shadow: var(--shadow); border-radius: var(--r-m); }
+.mx .sec { border-radius: var(--r-l); }
+.mx .tools .gg-canvas { box-shadow: var(--shadow); }
+
+/* chapter layout: sticky contents on wide screens */
+
+/* section titles */
+.mx .sec > h3 { padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+
+/* labelled blocks get an icon so kinds are recognisable at a glance */
+.mx .dl::before, .mx .kl::before, .mx .nl::before, .mx .el::before {
+  content: ""; display: inline-block; width: 1.25em; height: 1.25em; margin-right: .55em; vertical-align: -0.3em; background: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain;
+}
+.mx .dl::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 4h12v16l-6-4-6 4z'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 4h12v16l-6-4-6 4z'/%3E%3C/svg%3E"); }
+.mx .kl::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.8l-5.3 2.8 1.1-6L3.4 9.4l6-.8z'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.8l-5.3 2.8 1.1-6L3.4 9.4l6-.8z'/%3E%3C/svg%3E"); }
+.mx .nl::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z'/%3E%3C/svg%3E"); }
+.mx .el::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20l4-1 10-10-3-3L5 16zM14 6l3 3'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20l4-1 10-10-3-3L5 16zM14 6l3 3'/%3E%3C/svg%3E"); }
+.mx .def, .mx .note, .mx .ex, .mx .key { border-radius: var(--r-m); }
+.mx .key { box-shadow: 0 1px 0 var(--key-line); }
+.mx .proof { border-radius: var(--r-m); }
+.mx .proof > summary { padding-top: 11px; padding-bottom: 11px; }
+.mx .proof > summary::before { top: 11px; }
+.mx .proof[open] > summary { border-bottom: 0; }
+
+/* tables */
+.mx .tw tbody tr:nth-child(even) td { background: var(--bg); }
+.mx .tw tbody th:first-child, .mx .tw thead th:first-child { position: sticky; left: 0; z-index: 1; box-shadow: 1px 0 0 var(--line); }
+.mx .tw table { border-radius: var(--r-s); }
+.mx .tw th, .mx .tw td { border-color: var(--line); }
+
+.mx .fig svg { border-radius: var(--r-s); }
+.mx .fig.wide svg, .mx .fig.small svg { background: var(--surface); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mx .tb, .mx .ext-card, .mx .proof > summary::before { transition: none; }
+}
+
+/* ===== curriculum navigation: chapters, lessons, problems ===== */
+
+.mx .lesson-body { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l, 14px); box-shadow: var(--shadow); min-width: 0; }
+.mx .lesson-body > h4:first-child { margin-top: 0; }
+.mx .lesson-body h4 { margin: 28px 0 10px; font-size: 1.1rem; line-height: 1.35; }
+.mx .lesson-body p { margin: 0 0 12px; line-height: 1.8; max-width: 74ch; }
+.mx .lesson-body p.muted { color: var(--muted); font-size: .9rem; }
+.mx .lesson-body code { padding: 1px 6px; font-size: .9em; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+.mx .lesson-body .cg p { max-width: none; }
+
+/* problems */
+.mx .pq { line-height: 1.85; overflow-wrap: anywhere; }
+.mx .pq p { margin: 0 0 8px; }
+.mx .ab { margin-top: 12px; line-height: 1.85; }
+
+/* vector figures */
+.mx .fig .va { stroke: var(--c1); stroke-width: 2.6; fill: none; }
+.mx .fig .vb { stroke: var(--c2); stroke-width: 2.6; fill: none; }
+.mx .fig .vc { stroke: var(--c3); stroke-width: 2.6; fill: none; }
+.mx .fig .vd { stroke: var(--c4); stroke-width: 2.6; fill: none; }
+.mx .fig .vk { stroke: var(--key); stroke-width: 3; fill: none; }
+.mx .fig .ah { fill: var(--c1); } .mx .fig .ah2 { fill: var(--c2); } .mx .fig .ah3 { fill: var(--c3); } .mx .fig .ah4 { fill: var(--c4); } .mx .fig .ahk { fill: var(--key); } .mx .fig .ahf { fill: var(--fg); }
+.mx .fig .vt { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; fill: none; }
+.mx .fig .sh { fill: var(--accent-soft); stroke: none; }
+.mx .toolpage .tools { margin-top: 8px; }
+.mx .toolpage .tools > h2 { display: none; }
+.mx .fig .vo { stroke: var(--fg); stroke-width: 1.2; fill: none; }
+.mx .fig .ahm { fill: var(--muted); }
+
+/* long inline formulas in problems wrap like text instead of being clipped */
+.mx .pq .im, .mx .ab .im { display: inline; overflow: visible; max-width: none; }
+.mx .pq math, .mx .ab math { overflow-wrap: anywhere; }
+.mx .pq .dm, .mx .ab .dm, .mx .lesson-body .dm { max-width: 100%; overflow-x: auto; }
+.mx .pq { overflow-x: auto; }
+@media (max-width: 480px) { .mx .dm math { font-size: .9em; } .mx .lesson-body { padding: 18px 16px; } }
+
+/* statistics, spatial and programming figures */
+.mx .fig .bar { fill: var(--c1); opacity: .85; }
+.mx .fig .bar.hb { stroke: var(--surface); stroke-width: 1.5; }
+.mx .fig .bx { fill: var(--accent-soft); stroke: var(--fg); stroke-width: 1.8; }
+.mx .fig .p1 { fill: var(--c2); stroke: var(--surface); stroke-width: 2; }
+.mx .fig .p2 { fill: var(--c4); stroke: var(--surface); stroke-width: 2; }
+.mx .fig .p3 { fill: var(--c1); stroke: var(--surface); stroke-width: 2; }
+.mx .fig .p4 { fill: var(--c3); stroke: var(--surface); stroke-width: 2; }
+.mx .fig .tw { fill: #fff; font: 700 13px "Noto Sans Georgian", system-ui, sans-serif; }
+.mx .fig .ed { stroke: var(--fg); stroke-width: 1.8; fill: none; }
+.mx .fig .hd { stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 5 4; fill: none; }
+.mx .fig .l1 { stroke: var(--c1); stroke-width: 3; fill: none; }
+.mx .fig .l2 { stroke: var(--c2); stroke-width: 3; fill: none; }
+.mx .fig .vc { stroke: var(--c3); stroke-width: 2.6; fill: none; }
+.mx .fig .lk { stroke: var(--key); stroke-width: 3; fill: none; }
+.mx .fig .pl { stroke: var(--muted); stroke-width: 1.4; }
+.mx .fig .sh2 { fill: var(--key-bg); stroke: var(--key); stroke-width: 1.4; }
+.mx .fig .gm { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; }
+.mx .fig .feas { fill: var(--accent-soft); stroke: var(--fg); stroke-width: 1.6; }
+.mx .fig .ahk { fill: var(--key); }
+
+/* ===== 3D board and vector board ===== */
+.mx .rg { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; margin: 0 0 10px; font-size: .875rem; }
+.mx .rg .rg-l { grid-column: 1; color: var(--muted); }
+.mx .rg .rg-o { grid-column: 2; grid-row: 1; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 2.4em; text-align: right; }
+.mx .rg input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); min-height: 28px; margin: 0; }
+.mx .chips2 { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.mx .t3-view { display: flex; flex-direction: column; gap: 4px; }
+.mx .t3-info { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.mx .t3-info th, .mx .t3-info td { text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-weight: 400; }
+.mx .t3-info th { color: var(--muted); }
+.mx .t3-info td { font-variant-numeric: tabular-nums; font-weight: 600; }
+.mx .t3-info td.vc { font-weight: 400; color: var(--muted); white-space: nowrap; }
+.mx .t3-info .vc-note { color: var(--c4); font-weight: 600; padding-top: 8px; }
+.mx .t3-secout { margin: 8px 0 0; font-size: .9rem; color: var(--c2); }
+.mx .t3-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-bottom: 8px; }
+.mx .t3-row .t3-nm, .mx .t3-row b { min-width: 1.4em; font-family: var(--font-math); font-size: 1.1rem; }
+.mx .t3-row label { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-math); color: var(--muted); }
+.mx .t3-row input[type="number"] { width: 3.7em; padding: 6px 6px; font: inherit; font-size: .9rem; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; min-height: 36px; }
+.mx .t3-h { margin-top: 16px; }
+.mx .t3-segs { width: 100%; box-sizing: border-box; margin-bottom: 4px; }
+.mx .t3-ang { margin-top: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .95rem; }
+.mx .t3-ang select { width: auto; flex: none; padding: 4px 6px; }
+.mx .vc-a { color: var(--c1); } .mx .vc-b { color: var(--c2); }
+.mx .t3-canvas, .mx .vc-canvas { cursor: grab; }
+.mx .t3-canvas:active { cursor: grabbing; }
+.mx .vc-canvas { cursor: crosshair; }
+.mx .gg-side > div + div { margin-top: 0; }
+.mx .t3-selrow { margin: 6px 0 10px; font-size: .9rem; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.mx .t3-objs li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mx .t3-secl { margin: 8px 0 0; padding-left: 18px; font-size: .875rem; color: var(--muted); }
+.mx .t3-kind { width: 100%; margin-bottom: 8px; box-sizing: border-box; }
+.mx .t3-pair { display: flex; gap: 8px; margin-bottom: 8px; }
+.mx .t3-pair select { flex: 1; min-width: 0; }
+.mx .t3-res { margin: 4px 0 10px; font-size: .92rem; font-weight: 600; color: var(--fg); line-height: 1.5; }
+
+/* ===== generic figure marks (grades 7-8) ===== */
+.mx .fig .ra { stroke: var(--fg); stroke-width: 1.2; fill: none; }
+.mx .fig .tk { stroke: var(--fg); stroke-width: 1.6; }
+.mx .fig .an1 { stroke: var(--c2); stroke-width: 2; fill: none; }
+.mx .fig .an2 { stroke: var(--c3); stroke-width: 2; fill: none; }
+.mx .fig .an3 { stroke: var(--c4); stroke-width: 2; fill: none; }
+.mx .fig .opn { fill: var(--surface); stroke: var(--key); stroke-width: 2.4; }
+.mx .fig .cls { fill: var(--key); stroke: var(--key); stroke-width: 2; }
+.mx .fig .mk { fill: var(--c1); stroke: var(--surface); stroke-width: 1.5; }
+.mx .fig .mk2 { fill: var(--c2); stroke: var(--surface); stroke-width: 1.5; }
+.mx .fig .fl { fill: var(--accent-soft); stroke: none; }
+.mx .fig .fl2 { fill: var(--c2); opacity: .18; stroke: none; }
+.mx .fig .fl3 { fill: var(--c3); opacity: .2; stroke: none; }
+
+/* ===== registration, profile, answer entry ===== */
+
+/* ===== Modern layer: loaded last. Tokens, aurora ground, big π logo, gradient hero, motion. ===== */
+
+/* ---------- ground ---------- */
+
+/* ---------- logo ---------- */
+@keyframes floaty { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4px) rotate(-3deg); } }
+@keyframes shine { 0%, 55% { left: -60%; } 100% { left: 160%; } }
+
+/* ---------- hero ---------- */
+@keyframes blink { 50% { opacity: .35; transform: scale(.7); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes fadein { to { opacity: 1; } }
+@keyframes drift { 0%, 100% { transform: translate(0, 0) rotate(0); } 33% { transform: translate(10px, -18px) rotate(8deg); } 66% { transform: translate(-8px, -8px) rotate(-6deg); } }
+@keyframes rise { from { opacity: 0; transform: translateY(22px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* ---------- stages and grade cards ---------- */
+
+/* ---------- panels, lesson pages ---------- */
+.mx .lesson-body, .mx .sec, .mx .ext-card {
+  border-radius: var(--r-l); border-color: color-mix(in srgb, var(--accent) 12%, var(--line));
+}
+.mx .def, .mx .note, .mx .ex, .mx .key { box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 6px 18px rgba(60, 40, 160, .05); }
+.mx .proof > summary { transition: background .2s, transform .2s var(--ease); }
+.mx .proof > summary:hover { transform: translateX(3px); }
+
+/* ---------- problems ---------- */
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.18); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes solvedpop { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c3) 55%, transparent); } 100% { box-shadow: 0 0 0 18px transparent; } }
+@keyframes shake { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+
+/* ---------- gate and profile ---------- */
+
+/* ---------- scroll reveal (enabled by modern.js only) ---------- */
+
+/* ===== online tests (grade 12) ===== */
+
+/* running */
+@keyframes exblink { 50% { opacity: .55; } }
+
+/* result */
+
+/* ===== chapter summary tests ===== */
+
+/* ===== teacher page + profile sync block ===== */
+
