@@ -56,8 +56,10 @@ function asChoice(p, sibs, f) {
 /**
  * Picks `size` questions spread evenly over the chapter's lessons, mixing levels, and turns
  * about a third of them into multiple choice. Returns item specs: { id, o?, c? }.
+ * `focus` (0…1): inside a lesson, the chance to prefer problems marked `f` (e.g. simplification and
+ * identities in grade 11 trigonometry). 0 keeps the original selection exactly.
  */
-export function buildChapterTest(pools, size, seed) {
+export function buildChapterTest(pools, size, seed, focus = 0) {
   const f = rng(seed);
   const idx = [];
   pools.forEach((a, i) => a.length && idx.push(i));
@@ -76,7 +78,12 @@ export function buildChapterTest(pools, size, seed) {
     let c = 0;
     for (let j = 0; c < quota[i] && j < quota[i] * 3 + 3; j++) {
       const lvl = order[j % 3];
-      let pick = list.findIndex((p, k) => !used[k] && !seenQ[p.q] && p.l === lvl);
+      let pick = -1;
+      if (focus > 0 && f() < focus) {
+        pick = list.findIndex((p, k) => !used[k] && !seenQ[p.q] && p.f && p.l === lvl);
+        if (pick < 0) pick = list.findIndex((p, k) => !used[k] && !seenQ[p.q] && p.f);
+      }
+      if (pick < 0) pick = list.findIndex((p, k) => !used[k] && !seenQ[p.q] && p.l === lvl);
       if (pick < 0) pick = list.findIndex((p, k) => !used[k] && !seenQ[p.q]);
       if (pick < 0) break;
       used[pick] = 1;

@@ -16,6 +16,12 @@ function Feedback({ st, local }) {
         <TriangleAlert className="size-4" aria-hidden="true" /> ჯერ ჩაწერე პასუხი.
       </span>
     );
+  if (local === "exact")
+    return (
+      <span className="inline-flex items-center gap-1.5 text-warning-foreground">
+        <TriangleAlert className="size-4" aria-hidden="true" /> ათწილადი არ მიიღება — ჩაწერე ზუსტი სახით: წილადით ან ფესვით (მაგ. √3/2, -1/2, 2π/3).
+      </span>
+    );
   if (local === "pick")
     return (
       <span className="inline-flex items-center gap-1.5 text-warning-foreground">
@@ -72,6 +78,8 @@ export const ProblemCard = memo(function ProblemCard({ p, index }) {
     } else {
       val = value.trim();
       if (!val) return setLocal("empty");
+      /* exact answers: a decimal is not counted as a try, the student is told how to write it */
+      if (CHK.rejectsInexact(val, p.k)) return setLocal("exact");
     }
     setLocal(null);
     const ok = !!CHK.check(val, p.k);

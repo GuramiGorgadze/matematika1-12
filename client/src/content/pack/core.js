@@ -149,17 +149,26 @@ var CHK = (function () {
     return parts.map(function (x) { return x.trim(); }).filter(function (x) { return x.length; });
   }
 
+  /* "exact" answers (fractions, roots, pi): a decimal or a function call such as sin(...) is not accepted */
+  function inexact(s) {
+    s = stripVarPrefix(norm(s));
+    if (/\d\.\d|\.\d|\d\./.test(s)) return true;
+    return /[a-zα-ω]/i.test(s.replace(/sqrt|cbrt|pi/gi, ""));
+  }
+
   function checkNum(input, spec) {
     try {
       var s = stripVarPrefix(norm(input));
+      if (spec.exact && inexact(s)) return false;
       var v = evalNum(s);
-      return close(v, spec.v, spec.tol);
+      return close(v, spec.v, spec.exact ? 1e-9 : spec.tol);
     } catch (e) { return false; }
   }
 
   function checkMulti(input, spec) {
     var vals = spec.v, parts = splitList(norm(input));
     if (parts.length !== vals.length) return false;
+    if (spec.exact && parts.some(inexact)) return false;
     var got;
     try { got = parts.map(function (x) { return evalNum(stripVarPrefix(x)); }); } catch (e) { return false; }
     if (spec.ordered === false) {
@@ -256,7 +265,13 @@ var CHK = (function () {
     return null;
   }
 
-  return { check: check, evalNum: evalNum, norm: norm, parseIntervals: parseIntervals };
+  /* true when an "exact" key would reject this input only because it is a decimal (or a function call) */
+  function rejectsInexact(input, spec) {
+    if (!spec || !spec.exact || (spec.t !== "num" && spec.t !== "multi")) return false;
+    try { return splitList(norm(input)).some(inexact); } catch (e) { return false; }
+  }
+
+  return { check: check, evalNum: evalNum, norm: norm, parseIntervals: parseIntervals, rejectsInexact: rejectsInexact };
 })();
 
 /* ===== problem generators: seeded templates that yield many checkable problems per lesson ===== */
@@ -362,7 +377,10 @@ var GEN = (function () {
             opts = order.map(function (i) { return key.opts[i]; });
             key = { t: "ch", opts: opts, v: String(order.indexOf(key.v)) };
           }
-          out.push({ l: lvl, q: wrap(q), a: key.t === "ch" && !res[2] ? key.opts[key.v] : showAns(key, res[2]), s: solHTML(res[3]), k: key, g: 1 });
+          var item = { l: lvl, q: wrap(q), a: key.t === "ch" && !res[2] ? key.opts[key.v] : showAns(key, res[2]), s: solHTML(res[3]), k: key, g: 1 };
+          if (res[4] && res[4].nt) item.nt = 1;      /* practice only: never drawn into a chapter test */
+          if (res[4] && res[4].f) item.f = 1;        /* "focus" problem: a chapter test may prefer it */
+          out.push(item);
         }
       }
     });
@@ -7413,121 +7431,9 @@ P(3, R`<p>გამოთვალე და ჩაწერე სტანდ�
 
 })();
 
-/* ===== grade 11, trigonometry I (c1s1 - c1s7): generators ===== */
-(function () {
-  var G = GEN.G, N = GEN.N, M = GEN.M, CH = GEN.CH, Q = GEN.Q, F = GEN.F, Fr = GEN.Fr, sg = GEN.sg, gcd = GEN.gcd;
-  var PI = Math.PI;
-  var HINT = R` (ჩაწერე, მაგალითად, √3/2, π/6, ან ათწილადად მეასედებამდე)`;
-  var QU = [R`I`, R`II`, R`III`, R`IV`];
-  var TRP = [[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25], [20, 21, 29]];
-  function nrm(d) { return ((d % 360) + 360) % 360; }
-  function refAng(d) { d = nrm(d); return d <= 90 ? d : d <= 180 ? 180 - d : d <= 270 ? d - 180 : 360 - d; }
-  var S0 = { 0: "0", 30: "\\frac12", 45: "\\frac{\\sqrt2}2", 60: "\\frac{\\sqrt3}2", 90: "1" };
-  var T0 = { 0: "0", 30: "\\frac{\\sqrt3}3", 45: "1", 60: "\\sqrt3" };
-  function sinT(d) { var n = nrm(d), ref = refAng(d); return (n > 180 && ref !== 0 ? "-" : "") + S0[ref]; }
-  function cosT(d) { var n = nrm(d), ref = refAng(d); return (n > 90 && n < 270 && ref !== 90 ? "-" : "") + S0[90 - ref]; }
-  function tanT(d) { var n = nrm(d), ref = refAng(d); if (ref === 90) return null; var neg = (n > 90 && n < 180) || (n > 270 && n < 360); return (neg && ref !== 0 ? "-" : "") + T0[ref]; }
-  function rad(d) { return d * PI / 180; }
-  function sv(d) { return Math.sin(rad(d)); }
-  function cv(d) { return Math.cos(rad(d)); }
-  function tv(d) { return Math.tan(rad(d)); }
-  function T(x) { return N(Math.round(x * 1e9) / 1e9, { tol: 0.006 }); }
-  /* degrees as a multiple of pi, TeX */
-  function piTex(d) { var g = gcd(Math.abs(d), 180), n = d / g, m = 180 / g; if (d === 0) return "0"; var s = (n < 0 ? "-" : ""); n = Math.abs(n); return s + (n === 1 ? "" : n) + "\\pi" + (m === 1 ? "" : "/" + m); }
-  function piFr(d) { var g = gcd(Math.abs(d), 180), n = d / g, m = 180 / g; if (d === 0) return "0"; var s = n < 0 ? "-" : ""; n = Math.abs(n); return m === 1 ? s + (n === 1 ? "" : n) + "\\pi" : s + "\\dfrac{" + (n === 1 ? "" : n) + "\\pi}{" + m + "}"; }
-  var SPEC = [30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330];
-  var SPEC2 = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360];
+/* grade 11, trigonometry (c1s1 - c1s12, c1s14): generators live in trig11.js (exact answers) */
 
-  G("c1s1", [
-    [1, 6, function (r) { var d = r.pick([30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360]); return Q(R`გადაიყვანე რადიანებში: $${d}^\circ$.${HINT}`, T(rad(d)), R`$${piFr(d)}$`, R`$${d}^\circ=${d}\cdot\dfrac{\pi}{180}=${piFr(d)}$.`); }],
-    [1, 6, function (r) { var d = r.pick([30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360]); return Q(R`გადაიყვანე გრადუსებში: $${piFr(d)}$ რადიანი.`, N(d), null, R`$${piFr(d)}\cdot\dfrac{180^\circ}{\pi}=${d}^\circ$.`); }],
-    [2, 4, function (r) { var rr = r.i(2, 12), k = r.pick([[1, 6], [1, 4], [1, 3], [1, 2], [2, 3], [3, 4], [5, 6]]); var a = k[0] * PI / k[1]; return Q(R`წრის რადიუსია $${rr}$. იპოვე რკალის სიგრძე, რომლის ცენტრალური კუთხეა $${k[0] === 1 ? "" : k[0]}\pi/${k[1]}$ რადიანი.${HINT}`, T(rr * a), R`$${F(rr * k[0] / k[1])}\pi$`, R`$l=r\alpha=${rr}\cdot\dfrac{${k[0]}\pi}{${k[1]}}=${F(rr * k[0] / k[1])}\pi$.`); }],
-    [2, 4, function (r) { var rr = r.i(2, 10), al = r.pick([1, 2, 3]); return Q(R`წრის რადიუსია $${rr}$. იპოვე იმ სექტორის ფართობი, რომლის ცენტრალური კუთხეა $${al}$ რადიანი.`, N(rr * rr * al / 2), null, R`$S=\dfrac12r^2\alpha=\dfrac12\cdot${rr * rr}\cdot${al}=${F(rr * rr * al / 2)}$.`); }],
-    [2, 4, function (r) { var rr = r.i(2, 9), l = r.i(2, 9) * rr; return Q(R`რკალის სიგრძეა $${l}$, წრის რადიუსი $${rr}$. იპოვე რკალის შესაბამისი ცენტრალური კუთხე რადიანებში.`, N(l / rr), null, R`$\alpha=\dfrac lr=\dfrac{${l}}{${rr}}=${l / rr}$.`); }],
-    [2, 4, function (r) { return Q(R`დაახლოებით რამდენი გრადუსია $1$ რადიანი? (მეათედებამდე)`, N(180 / PI, { tol: 0.1 }), R`$\dfrac{180^\circ}{\pi}\approx57{,}3^\circ$`, R`$1\text{ რად}=\dfrac{180^\circ}{\pi}\approx57{,}3^\circ$.`); }],
-    [3, 4, function (r) { var k = r.i(2, 9), d = r.pick([2, 3, 4, 6]); return Q(R`საათის წუთების ისარი $${k * 5}$ წუთში რამდენი რადიანით მობრუნდება? ($60$ წუთი $=2\pi$)${HINT}`, T(2 * PI * k * 5 / 60), null, R`$\dfrac{${k * 5}}{60}\cdot2\pi=${piFr(k * 30)}$.`); }],
-    [3, 4, function (r) { var n = r.i(2, 9), m = r.pick([2, 4]); return Q(R`თვლის ბორბალმა $${n}$ ბრუნი შეასრულა. რამდენი რადიანით მობრუნდა ის? ჩაწერე $\pi$-ს კოეფიციენტი.`, N(2 * n), null, R`ერთი ბრუნი $2\pi$ რადიანია: $${n}\cdot2\pi=${2 * n}\pi$.`); }],
-    [3, 3, function (r) { var d = r.pick([15, 75, 105, 165, 12, 18, 36, 72]); return Q(R`გადაიყვანე რადიანებში: $${d}^\circ$ და ჩაწერე ათწილადად (მეასედებამდე, $\pi\approx3{,}14$ დაუშვი ზუსტადაც).`, T(rad(d)), R`$${piFr(d)}\approx${F(rad(d))}$`, R`$${d}^\circ=\dfrac{${d}\pi}{180}=${piFr(d)}\approx${F(rad(d))}$.`); }]
-  ]);
-
-  G("c1s2", [
-    [1, 6, function (r) { var d = r.pick(SPEC2), w = r.i(0, 1), fn = w ? "\\sin" : "\\cos"; var key = w ? sv(d) : cv(d); return Q(R`იპოვე $${fn}\,${d}^\circ$.${HINT}`, T(key), R`$${w ? sinT(d) : cosT(d)}$`, R`ერთეულოვან წრეწირზე $P(${d}^\circ)=(\cos${d}^\circ;\ \sin${d}^\circ)$. $${fn}\,${d}^\circ=${w ? sinT(d) : cosT(d)}$.`); }],
-    [1, 5, function (r) { var d = r.pick([0, 30, 45, 60, 120, 135, 150, 180, 210, 225, 240, 300, 315, 330, 360]); var tt = tanT(d); if (!tt) return null; return Q(R`იპოვე $\operatorname{tg}\,${d}^\circ$.${HINT}`, T(tv(d)), R`$${tt}$`, R`$\operatorname{tg}\alpha=\dfrac{\sin\alpha}{\cos\alpha}=\dfrac{${sinT(d)}}{${cosT(d)}}=${tt}$.`); }],
-    [2, 5, function (r) { var d = r.pick([90, 270, 30, 45, 60, 120, 150, 210, 240, 300, 330]); var sn = sv(d), cs = cv(d); var q = nrm(d); var ans = q === 90 || q === 270 ? 0 : 0; var qi = q < 90 ? 0 : q < 180 ? 1 : q < 270 ? 2 : 3; if (q % 90 === 0) return null; return Q(R`რომელ მეოთხედშია $${d}^\circ$ კუთხე? (ჩაწერე მეოთხედის ნომერი $1$–$4$)`, N(qi + 1), null, R`$${d}^\circ$ ${q < 90 ? "$0^\\circ$ და $90^\\circ$ შორისაა" : q < 180 ? "$90^\\circ$ და $180^\\circ$ შორისაა" : q < 270 ? "$180^\\circ$ და $270^\\circ$ შორისაა" : "$270^\\circ$ და $360^\\circ$ შორისაა"}: მეოთხედი $${qi + 1}$.`); }],
-    [2, 4, function (r) { var d = r.pick([30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330]); var w = r.i(0, 1), fn = w ? "\\sin" : "\\cos"; var pos = (w ? sv(d) : cv(d)) > 0; return Q(R`დადებითია თუ უარყოფითი $${fn}\,${d}^\circ$?`, CH([R`დადებითია`, R`უარყოფითია`], pos ? 0 : 1), null, R`${w ? "სინუსი" : "კოსინუსი"} ${pos ? "დადებითია" : "უარყოფითია"} ამ მეოთხედში.`); }],
-    [2, 4, function (r) { var d = r.pick(SPEC); return Q(R`იპოვე $\sin${d}^\circ+\cos${d}^\circ$.${HINT}`, T(sv(d) + cv(d)), null, R`$\sin${d}^\circ=${sinT(d)}$, $\cos${d}^\circ=${cosT(d)}$. ჯამი $\approx${F(sv(d) + cv(d))}$.`); }],
-    [3, 4, function (r) { var d = r.pick(SPEC); return Q(R`იპოვე $\sin^2${d}^\circ+\cos^2${d}^\circ$.`, N(1), null, R`ძირითადი იგივეობა: $\sin^2\alpha+\cos^2\alpha=1$.`); }],
-    [3, 4, function (r) { var d = r.pick([30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330]), e = r.pick([30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330]); return Q(R`იპოვე $\sin${d}^\circ\cdot\cos${e}^\circ$.${HINT}`, T(sv(d) * cv(e)), null, R`$\sin${d}^\circ=${sinT(d)}$, $\cos${e}^\circ=${cosT(e)}$. ნამრავლი $\approx${F(sv(d) * cv(e))}$.`); }],
-    [3, 4, function (r) { var d = r.pick([0, 90, 180, 270, 360]); var s = Math.round(sv(d)), c = Math.round(cv(d)); return Q(R`იპოვე $\sin${d}^\circ-\cos${d}^\circ$.`, N(s - c), null, R`$\sin${d}^\circ=${s}$, $\cos${d}^\circ=${c}$. სხვაობა $${s - c}$.`); }],
-    [3, 3, function (r) { var t = r.pick(TRP), k = r.i(1, 1); var neg = r.i(0, 1); return Q(R`ერთეულოვან წრეწირზე $P(\alpha)$ წერტილის კოორდინატებია $\left(\dfrac{${t[0]}}{${t[2]}};\ ${neg ? "-" : ""}\dfrac{${t[1]}}{${t[2]}}\right)$. იპოვე $\sin\alpha$.${HINT}`, T((neg ? -1 : 1) * t[1] / t[2]), R`$${neg ? "-" : ""}\dfrac{${t[1]}}{${t[2]}}$`, R`ორდინატა $\sin\alpha$-ა: $${neg ? "-" : ""}\dfrac{${t[1]}}{${t[2]}}$.`); }]
-  ]);
-
-  G("c1s3", [
-    [1, 5, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$, $\alpha$ მე-I მეოთხედშია. იპოვე $\cos\alpha$.${HINT}`, T(t[1] / t[2]), R`$\dfrac{${t[1]}}{${t[2]}}$`, R`$\cos\alpha=\sqrt{1-\sin^2\alpha}=\sqrt{1-\dfrac{${t[0] * t[0]}}{${t[2] * t[2]}}}=\dfrac{${t[1]}}{${t[2]}}$.`); }],
-    [1, 5, function (r) { var t = r.pick(TRP); return Q(R`$\cos\alpha=\dfrac{${t[0]}}{${t[2]}}$, $\alpha$ მე-I მეოთხედშია. იპოვე $\sin\alpha$.${HINT}`, T(t[1] / t[2]), R`$\dfrac{${t[1]}}{${t[2]}}$`, R`$\sin\alpha=\sqrt{1-\cos^2\alpha}=\dfrac{${t[1]}}{${t[2]}}$.`); }],
-    [2, 5, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=-\dfrac{${t[0]}}{${t[2]}}$ და $\alpha$ მე-IV მეოთხედშია. იპოვე $\cos\alpha$.${HINT}`, T(t[1] / t[2]), R`$\dfrac{${t[1]}}{${t[2]}}$`, R`$\cos^2\alpha=1-\dfrac{${t[0] * t[0]}}{${t[2] * t[2]}}$, IV მეოთხედში $\cos\alpha>0$: $\dfrac{${t[1]}}{${t[2]}}$.`); }],
-    [2, 5, function (r) { var t = r.pick(TRP); return Q(R`$\cos\alpha=-\dfrac{${t[0]}}{${t[2]}}$ და $\alpha$ მე-II მეოთხედშია. იპოვე $\sin\alpha$.${HINT}`, T(t[1] / t[2]), R`$\dfrac{${t[1]}}{${t[2]}}$`, R`II მეოთხედში $\sin\alpha>0$: $\sqrt{1-\dfrac{${t[0] * t[0]}}{${t[2] * t[2]}}}=\dfrac{${t[1]}}{${t[2]}}$.`); }],
-    [2, 4, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$, $\alpha$ მე-I მეოთხედშია. იპოვე $\operatorname{tg}\alpha$.${HINT}`, T(t[0] / t[1]), R`$\dfrac{${t[0]}}{${t[1]}}$`, R`$\cos\alpha=\dfrac{${t[1]}}{${t[2]}}$, $\operatorname{tg}\alpha=\dfrac{\sin\alpha}{\cos\alpha}=\dfrac{${t[0]}}{${t[1]}}$.`); }],
-    [2, 4, function (r) { var a = r.i(2, 7), b = r.i(2, 7); return Q(R`გამოთვალე: $\operatorname{tg}\alpha\cdot\operatorname{ctg}\alpha$, თუ $\operatorname{tg}\alpha=${a}/${b}$.`, N(1), null, R`$\operatorname{tg}\alpha\cdot\operatorname{ctg}\alpha=1$.`); }],
-    [3, 4, function (r) { var t = r.pick(TRP); return Q(R`$\operatorname{tg}\alpha=\dfrac{${t[0]}}{${t[1]}}$, $\alpha$ მე-I მეოთხედშია. იპოვე $\cos\alpha$.${HINT}`, T(t[1] / t[2]), R`$\dfrac{${t[1]}}{${t[2]}}$`, R`$1+\operatorname{tg}^2\alpha=\dfrac1{\cos^2\alpha}$, $\cos\alpha=\dfrac1{\sqrt{1+${t[0] * t[0]}/${t[1] * t[1]}}}=\dfrac{${t[1]}}{${t[2]}}$.`); }],
-    [3, 4, function (r) { var s = r.pick([[3, 5], [1, 2], [1, 3], [3, 4]]); var sn = s[0] / s[1]; return Q(R`$\sin\alpha+\cos\alpha=\dfrac{${s[0]}}{${s[1]}}$. იპოვე $\sin\alpha\cos\alpha$.${HINT}`, N((sn * sn - 1) / 2, { tol: 0.005 }), R`$${Fr(s[0] * s[0] - s[1] * s[1], 2 * s[1] * s[1])}$`, R`ორივე მხარე კვადრატში: $1+2\sin\alpha\cos\alpha=\dfrac{${s[0] * s[0]}}{${s[1] * s[1]}}$, საიდანაც $\sin\alpha\cos\alpha=${Fr(s[0] * s[0] - s[1] * s[1], 2 * s[1] * s[1])}$.`); }],
-    [3, 4, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$, $\alpha$ მე-II მეოთხედშია. იპოვე $\operatorname{ctg}\alpha$.${HINT}`, T(-t[1] / t[0]), R`$-\dfrac{${t[1]}}{${t[0]}}$`, R`$\cos\alpha=-\dfrac{${t[1]}}{${t[2]}}$, $\operatorname{ctg}\alpha=\dfrac{\cos\alpha}{\sin\alpha}=-\dfrac{${t[1]}}{${t[0]}}$.`); }],
-    [3, 3, function (r) { var t = r.pick(TRP), k = r.i(2, 5); return Q(R`გამოთვალე: $${k}\sin^2\alpha+${k}\cos^2\alpha$.`, N(k), null, R`$${k}(\sin^2\alpha+\cos^2\alpha)=${k}$.`); }]
-  ]);
-
-  G("c1s4", [
-    [1, 6, function (r) { var d = r.pick([30, 45, 60]); return Q(R`იპოვე $\sin(-${d}^\circ)$.${HINT}`, T(-sv(d)), R`$-${S0[d]}$`, R`სინუსი კენტია: $\sin(-\alpha)=-\sin\alpha=-${S0[d]}$.`); }],
-    [1, 5, function (r) { var d = r.pick([30, 45, 60]); return Q(R`იპოვე $\cos(-${d}^\circ)$.${HINT}`, T(cv(d)), R`$${cosT(d)}$`, R`კოსინუსი ლუწია: $\cos(-\alpha)=\cos\alpha=${cosT(d)}$.`); }],
-    [2, 5, function (r) { var d = r.pick([30, 45, 60]), k = r.i(1, 4); return Q(R`იპოვე $\sin(${d + 360 * k}^\circ)$.${HINT}`, T(sv(d)), R`$${sinT(d)}$`, R`პერიოდი $360^\circ$: $\sin(${d}^\circ+${k}\cdot360^\circ)=\sin${d}^\circ=${sinT(d)}$.`); }],
-    [2, 5, function (r) { var d = r.pick([30, 45, 60]), k = r.i(1, 4); return Q(R`იპოვე $\cos(${d + 360 * k}^\circ)$.${HINT}`, T(cv(d)), R`$${cosT(d)}$`, R`პერიოდის გამო $\cos${d}^\circ=${cosT(d)}$.`); }],
-    [2, 4, function (r) { var d = r.pick([30, 45, 60]), k = r.i(1, 3); return Q(R`იპოვე $\operatorname{tg}(${d + 180 * k}^\circ)$.${HINT}`, T(tv(d)), R`$${tanT(d)}$`, R`ტანგენსის პერიოდია $180^\circ$: $\operatorname{tg}${d}^\circ=${tanT(d)}$.`); }],
-    [2, 4, function (r) { var k = r.i(2, 6); return Q(R`იპოვე $y=\sin(${k}x)$ ფუნქციის უმცირესი დადებითი პერიოდი.${HINT}`, T(2 * PI / k), R`$\dfrac{2\pi}{${k}}$`, R`$T=\dfrac{2\pi}{${k}}$.`); }],
-    [3, 4, function (r) { var k = r.i(2, 6); return Q(R`იპოვე $y=\operatorname{tg}(${k}x)$ ფუნქციის უმცირესი დადებითი პერიოდი.${HINT}`, T(PI / k), R`$\dfrac{\pi}{${k}}$`, R`$T=\dfrac{\pi}{${k}}$.`); }],
-    [3, 4, function (r) { var d = r.pick([30, 45, 60]), e = r.pick([30, 45, 60]); return Q(R`იპოვე $\sin(-${d}^\circ)+\sin${e}^\circ$.${HINT}`, T(sv(e) - sv(d)), null, R`$-${S0[d]}+${S0[e]}\approx${F(sv(e) - sv(d))}$.`); }],
-    [3, 4, function (r) { var w = r.pick([[R`$y=x^2+\cos x$`, 0], [R`$y=x\sin x$`, 0], [R`$y=x+\sin x$`, 1], [R`$y=\sin x\cos x$`, 1], [R`$y=\cos x-x^2$`, 0], [R`$y=x^3\cos x$`, 1]]); return Q(R`ფუნქცია ლუწია, კენტი თუ არც ერთი? ${w[0]}`, CH([R`ლუწია`, R`კენტია`, R`არც ლუწია, არც კენტი`], w[1]), null, w[1] === 1 ? R`$f(-x)=-f(x)$, ამიტომ კენტია.` : R`$f(-x)=f(x)$, ამიტომ ლუწია.`); }],
-    [3, 3, function (r) { var d = r.pick([30, 45, 60]), k = r.i(1, 3); return Q(R`იპოვე $\cos(-${d + 360 * k}^\circ)$.${HINT}`, T(cv(d)), null, R`$\cos(-\alpha)=\cos\alpha$, ხოლო $\cos${d + 360 * k}^\circ=\cos${d}^\circ=${cosT(d)}$.`); }]
-  ]);
-
-  G("c1s5", [
-    [1, 4, function (r) { var a = r.pick([[30, 45], [45, 30], [60, 45], [45, 60]]); return Q(R`გამოთვალე $\sin${a[0] + a[1]}^\circ$ ($=\sin(${a[0]}^\circ+${a[1]}^\circ)$).${HINT}`, T(sv(a[0] + a[1])), null, R`$\sin(\alpha+\beta)=\sin\alpha\cos\beta+\cos\alpha\sin\beta\approx${F(sv(a[0] + a[1]))}$.`); }],
-    [1, 4, function (r) { var a = r.pick([[60, 45], [45, 30], [90, 30], [90, 45], [60, 30]]); return Q(R`გამოთვალე $\cos${a[0] - a[1]}^\circ$ ($=\cos(${a[0]}^\circ-${a[1]}^\circ)$).${HINT}`, T(cv(a[0] - a[1])), null, R`$\cos(\alpha-\beta)=\cos\alpha\cos\beta+\sin\alpha\sin\beta\approx${F(cv(a[0] - a[1]))}$.`); }],
-    [2, 5, function (r) { var t1 = r.pick([[3, 4, 5], [5, 12, 13]]), t2 = r.pick([[8, 15, 17], [7, 24, 25]]); var v = (t1[0] * t2[1] + t1[1] * t2[0]) / (t1[2] * t2[2]); return Q(R`$\sin\alpha=\dfrac{${t1[0]}}{${t1[2]}}$, $\sin\beta=\dfrac{${t2[0]}}{${t2[2]}}$, $\alpha$ და $\beta$ მახვილი კუთხეებია. იპოვე $\sin(\alpha+\beta)$.${HINT}`, N(v, { tol: 0.005 }), R`$\dfrac{${t1[0] * t2[1] + t1[1] * t2[0]}}{${t1[2] * t2[2]}}$`, R`$\cos\alpha=\dfrac{${t1[1]}}{${t1[2]}}$, $\cos\beta=\dfrac{${t2[1]}}{${t2[2]}}$. $\sin(\alpha+\beta)=\dfrac{${t1[0]}\cdot${t2[1]}+${t1[1]}\cdot${t2[0]}}{${t1[2]}\cdot${t2[2]}}=\dfrac{${t1[0] * t2[1] + t1[1] * t2[0]}}{${t1[2] * t2[2]}}$.`); }],
-    [2, 5, function (r) { var t1 = r.pick([[3, 4, 5], [5, 12, 13]]), t2 = r.pick([[8, 15, 17], [7, 24, 25]]); var v = (t1[1] * t2[1] - t1[0] * t2[0]) / (t1[2] * t2[2]); return Q(R`$\sin\alpha=\dfrac{${t1[0]}}{${t1[2]}}$, $\sin\beta=\dfrac{${t2[0]}}{${t2[2]}}$, $\alpha$ და $\beta$ მახვილი კუთხეებია. იპოვე $\cos(\alpha+\beta)$.${HINT}`, N(v, { tol: 0.005 }), R`$\dfrac{${t1[1] * t2[1] - t1[0] * t2[0]}}{${t1[2] * t2[2]}}$`, R`$\cos(\alpha+\beta)=\cos\alpha\cos\beta-\sin\alpha\sin\beta=\dfrac{${t1[1]}\cdot${t2[1]}-${t1[0]}\cdot${t2[0]}}{${t1[2]}\cdot${t2[2]}}$.`); }],
-    [2, 4, function (r) { var a = r.pick([15, 75]); var w = r.i(0, 1), fn = w ? "\\sin" : "\\cos"; return Q(R`გამოთვალე $${fn}\,${a}^\circ$.${HINT}`, T(w ? sv(a) : cv(a)), R`$${F(w ? sv(a) : cv(a))}$`, R`$${a}^\circ=${a === 15 ? "45^\\circ-30^\\circ" : "45^\\circ+30^\\circ"}$. ფორმულებით მივიღებთ $\approx${F(w ? sv(a) : cv(a))}$.`); }],
-    [2, 4, function (r) { var t = r.pick([[3, 4], [5, 12]]), b = r.pick([30, 45, 60]); var s1 = t[0] / Math.hypot(t[0], t[1]), c1 = t[1] / Math.hypot(t[0], t[1]); var v = s1 * cv(b) + c1 * sv(b); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${Math.hypot(t[0], t[1])}}$ ($\alpha$ მახვილია). იპოვე $\sin(\alpha+${b}^\circ)$.${HINT}`, T(v), null, R`$\sin(\alpha+${b}^\circ)=\sin\alpha\cos${b}^\circ+\cos\alpha\sin${b}^\circ\approx${F(v)}$.`); }],
-    [3, 4, function (r) { var a = r.pick([30, 45]); return Q(R`გამოთვალე $\operatorname{tg}(${a}^\circ+45^\circ)$.${HINT}`, T(tv(a + 45)), null, R`$\operatorname{tg}(\alpha+\beta)=\dfrac{\operatorname{tg}\alpha+\operatorname{tg}\beta}{1-\operatorname{tg}\alpha\operatorname{tg}\beta}\approx${F(tv(a + 45))}$.`); }],
-    [3, 4, function (r) { var a = r.pick([[75, 15], [105, 15], [80, 20], [50, 10], [70, 20]]); return Q(R`გამოთვალე $\cos${a[0]}^\circ\cos${a[1]}^\circ-\sin${a[0]}^\circ\sin${a[1]}^\circ$.${HINT}`, T(cv(a[0] + a[1])), null, R`ეს $\cos(${a[0]}^\circ+${a[1]}^\circ)=\cos${a[0] + a[1]}^\circ$.`); }],
-    [3, 4, function (r) { var a = r.pick([[40, 20], [50, 10], [70, 40], [80, 50], [100, 70]]); return Q(R`გამოთვალე $\sin${a[0]}^\circ\cos${a[1]}^\circ+\cos${a[0]}^\circ\sin${a[1]}^\circ$.${HINT}`, T(sv(a[0] + a[1])), null, R`ეს $\sin(${a[0]}^\circ+${a[1]}^\circ)=\sin${a[0] + a[1]}^\circ$.`); }],
-    [3, 3, function (r) { var a = r.pick([[75, 15], [60, 30], [50, 40], [20, 25]]); return Q(R`გამოთვალე $\sin${a[0]}^\circ\cos${a[1]}^\circ-\cos${a[0]}^\circ\sin${a[1]}^\circ$.${HINT}`, T(sv(a[0] - a[1])), null, R`ეს $\sin(${a[0]}^\circ-${a[1]}^\circ)=\sin${a[0] - a[1]}^\circ$.`); }]
-  ]);
-
-  G("c1s6", [
-    [1, 6, function (r) { var d = r.pick([30, 45, 60]); return Q(R`იპოვე $\sin${180 - d}^\circ$.${HINT}`, T(sv(d)), R`$${sinT(d)}$`, R`$\sin(180^\circ-\alpha)=\sin\alpha$: $\sin${180 - d}^\circ=\sin${d}^\circ=${sinT(d)}$.`); }],
-    [1, 5, function (r) { var d = r.pick([30, 45, 60]); return Q(R`იპოვე $\cos${180 - d}^\circ$.${HINT}`, T(-cv(d)), R`$${cosT(180 - d)}$`, R`$\cos(180^\circ-\alpha)=-\cos\alpha=-${S0[90 - d]}$.`); }],
-    [2, 5, function (r) { var d = r.pick([30, 45, 60]); return Q(R`იპოვე $\sin${180 + d}^\circ$.${HINT}`, T(-sv(d)), R`$${sinT(180 + d)}$`, R`$\sin(180^\circ+\alpha)=-\sin\alpha=-${S0[d]}$.`); }],
-    [2, 5, function (r) { var d = r.pick([30, 45, 60]); return Q(R`იპოვე $\cos${360 - d}^\circ$.${HINT}`, T(cv(d)), R`$${cosT(d)}$`, R`$\cos(360^\circ-\alpha)=\cos\alpha=${cosT(d)}$.`); }],
-    [2, 4, function (r) { var d = r.pick([30, 45, 60]); var tt = tanT(180 - d); return Q(R`იპოვე $\operatorname{tg}${180 - d}^\circ$.${HINT}`, T(-tv(d)), R`$${tt}$`, R`$\operatorname{tg}(180^\circ-\alpha)=-\operatorname{tg}\alpha=${tt}$.`); }],
-    [2, 4, function (r) { var t = r.pick(TRP); return Q(R`$\cos\alpha=\dfrac{${t[0]}}{${t[2]}}$ და $\alpha$ მახვილია. იპოვე $\sin\left(\dfrac\pi2+\alpha\right)$.${HINT}`, T(t[0] / t[2]), R`$\dfrac{${t[0]}}{${t[2]}}$`, R`$\sin\left(\dfrac\pi2+\alpha\right)=\cos\alpha=\dfrac{${t[0]}}{${t[2]}}$.`); }],
-    [3, 4, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$. იპოვე $\cos\left(\dfrac\pi2-\alpha\right)$.${HINT}`, T(t[0] / t[2]), R`$\dfrac{${t[0]}}{${t[2]}}$`, R`$\cos\left(\dfrac\pi2-\alpha\right)=\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$.`); }],
-    [3, 4, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$. იპოვე $\sin(\pi+\alpha)$.${HINT}`, T(-t[0] / t[2]), R`$-\dfrac{${t[0]}}{${t[2]}}$`, R`$\sin(\pi+\alpha)=-\sin\alpha=-\dfrac{${t[0]}}{${t[2]}}$.`); }],
-    [3, 4, function (r) { var d = r.pick([30, 45, 60]); return Q(R`გამოთვალე $\sin${180 - d}^\circ+\cos${180 + d}^\circ$.${HINT}`, T(sv(d) - cv(d)), null, R`$\sin${d}^\circ-\cos${d}^\circ\approx${F(sv(d) - cv(d))}$.`); }],
-    [3, 3, function (r) { var d = r.pick([30, 45, 60]); return Q(R`გამოთვალე $\sin(270^\circ-${d}^\circ)$.${HINT}`, T(-cv(d)), null, R`$\sin(270^\circ-\alpha)=-\cos\alpha=-${S0[90 - d]}$.`); }]
-  ]);
-
-  G("c1s7", [
-    [1, 5, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$, $\cos\alpha=\dfrac{${t[1]}}{${t[2]}}$. იპოვე $\sin2\alpha$.${HINT}`, N(2 * t[0] * t[1] / (t[2] * t[2]), { tol: 0.005 }), R`$\dfrac{${2 * t[0] * t[1]}}{${t[2] * t[2]}}$`, R`$\sin2\alpha=2\sin\alpha\cos\alpha=\dfrac{2\cdot${t[0]}\cdot${t[1]}}{${t[2] * t[2]}}$.`); }],
-    [1, 5, function (r) { var t = r.pick(TRP); return Q(R`$\cos\alpha=\dfrac{${t[1]}}{${t[2]}}$. იპოვე $\cos2\alpha$ ($\cos2\alpha=2\cos^2\alpha-1$).${HINT}`, N(2 * t[1] * t[1] / (t[2] * t[2]) - 1, { tol: 0.005 }), R`$\dfrac{${2 * t[1] * t[1] - t[2] * t[2]}}{${t[2] * t[2]}}$`, R`$2\cdot\dfrac{${t[1] * t[1]}}{${t[2] * t[2]}}-1=\dfrac{${2 * t[1] * t[1] - t[2] * t[2]}}{${t[2] * t[2]}}$.`); }],
-    [2, 5, function (r) { var d = r.pick([15, 22.5, 30, 45, 60]); return Q(R`გამოთვალე $2\sin${d}^\circ\cos${d}^\circ$.${HINT}`, T(sv(2 * d)), null, R`$2\sin\alpha\cos\alpha=\sin2\alpha=\sin${2 * d}^\circ\approx${F(sv(2 * d))}$.`); }],
-    [2, 5, function (r) { var d = r.pick([15, 22.5, 30, 45, 60]); return Q(R`გამოთვალე $\cos^2${d}^\circ-\sin^2${d}^\circ$.${HINT}`, T(cv(2 * d)), null, R`$\cos^2\alpha-\sin^2\alpha=\cos2\alpha=\cos${2 * d}^\circ\approx${F(cv(2 * d))}$.`); }],
-    [2, 4, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$. იპოვე $\cos2\alpha$ ($\cos2\alpha=1-2\sin^2\alpha$).${HINT}`, N(1 - 2 * t[0] * t[0] / (t[2] * t[2]), { tol: 0.005 }), R`$\dfrac{${t[2] * t[2] - 2 * t[0] * t[0]}}{${t[2] * t[2]}}$`, R`$1-2\cdot\dfrac{${t[0] * t[0]}}{${t[2] * t[2]}}=\dfrac{${t[2] * t[2] - 2 * t[0] * t[0]}}{${t[2] * t[2]}}$.`); }],
-    [3, 4, function (r) { var a = r.pick([15, 22.5, 30, 60]); return Q(R`გამოთვალე $\operatorname{tg}2\alpha$, თუ $\alpha=${a}^\circ$.${HINT}`, T(tv(2 * a)), null, R`$\operatorname{tg}2\alpha=\dfrac{2\operatorname{tg}\alpha}{1-\operatorname{tg}^2\alpha}=\operatorname{tg}${2 * a}^\circ\approx${F(tv(2 * a))}$.`); }],
-    [3, 4, function (r) { var d = r.pick([15, 75]); return Q(R`გამოთვალე $\sin${d}^\circ\cos${d}^\circ$.${HINT}`, T(0.5 * sv(2 * d)), R`$\dfrac14$`, R`$\sin\alpha\cos\alpha=\dfrac12\sin2\alpha=\dfrac12\sin30^\circ=\dfrac14$.`); }],
-    [3, 4, function (r) { var s = r.pick([[1, 2], [3, 5], [4, 5], [1, 3], [2, 3]]); var x = s[0] / s[1]; var v = 3 * x - 4 * x * x * x; return Q(R`$\sin\alpha=\dfrac{${s[0]}}{${s[1]}}$. იპოვე $\sin3\alpha$ ($\sin3\alpha=3\sin\alpha-4\sin^3\alpha$).${HINT}`, N(v, { tol: 0.005 }), R`$${Fr(3 * s[0] * s[1] * s[1] - 4 * s[0] * s[0] * s[0], s[1] * s[1] * s[1])}$`, R`$3\cdot\dfrac{${s[0]}}{${s[1]}}-4\cdot\dfrac{${s[0] * s[0] * s[0]}}{${s[1] * s[1] * s[1]}}=${Fr(3 * s[0] * s[1] * s[1] - 4 * s[0] * s[0] * s[0], s[1] * s[1] * s[1])}$.`); }],
-    [3, 3, function (r) { var d = r.pick([15, 22.5, 75]); return Q(R`გამოთვალე $\dfrac{1-\cos${2 * d}^\circ}{2}$ (ეს $\sin^2${d}^\circ$-ია).${HINT}`, T(sv(d) * sv(d)), null, R`$\sin^2\alpha=\dfrac{1-\cos2\alpha}{2}$, ამიტომ პასუხია $\sin^2${d}^\circ\approx${F(sv(d) * sv(d))}$.`); }]
-  ]);
-})();
-
-/* ===== grade 11, trigonometry II (c1s8 - c1s14) and statistics (c2): generators ===== */
+/* ===== grade 11, sine and cosine theorems (c1s13, practice only) and statistics (c2): generators ===== */
 (function () {
   var G = GEN.G, N = GEN.N, M = GEN.M, IV = GEN.IV, CH = GEN.CH, Q = GEN.Q, F = GEN.F, Fr = GEN.Fr, sg = GEN.sg, gcd = GEN.gcd;
   var PI = Math.PI;
@@ -7547,71 +7453,9 @@ P(3, R`<p>გამოთვალე და ჩაწერე სტანდ�
   function med(a) { var s = sorted(a), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; }
   var PAIRS = [[75, 15], [105, 15], [120, 60], [90, 30], [150, 30], [100, 20], [80, 40], [50, 10], [70, 10], [130, 10], [110, 50], [140, 20]];
 
-  G("c1s8", [
-    [1, 6, function (r) { var p = r.pick(PAIRS); return Q(R`გამოთვალე $\sin${p[0]}^\circ+\sin${p[1]}^\circ$ ჯამის ნამრავლად გარდაქმნით.${HINT}`, T(sv(p[0]) + sv(p[1])), null, R`$\sin A+\sin B=2\sin\dfrac{A+B}2\cos\dfrac{A-B}2=2\sin${(p[0] + p[1]) / 2}^\circ\cos${(p[0] - p[1]) / 2}^\circ\approx${F(sv(p[0]) + sv(p[1]))}$.`); }],
-    [1, 5, function (r) { var p = r.pick(PAIRS); return Q(R`გამოთვალე $\cos${p[0]}^\circ+\cos${p[1]}^\circ$.${HINT}`, T(cv(p[0]) + cv(p[1])), null, R`$\cos A+\cos B=2\cos\dfrac{A+B}2\cos\dfrac{A-B}2=2\cos${(p[0] + p[1]) / 2}^\circ\cos${(p[0] - p[1]) / 2}^\circ\approx${F(cv(p[0]) + cv(p[1]))}$.`); }],
-    [2, 5, function (r) { var p = r.pick(PAIRS); return Q(R`გამოთვალე $\sin${p[0]}^\circ-\sin${p[1]}^\circ$.${HINT}`, T(sv(p[0]) - sv(p[1])), null, R`$\sin A-\sin B=2\cos\dfrac{A+B}2\sin\dfrac{A-B}2\approx${F(sv(p[0]) - sv(p[1]))}$.`); }],
-    [2, 5, function (r) { var p = r.pick(PAIRS); return Q(R`გამოთვალე $\cos${p[1]}^\circ-\cos${p[0]}^\circ$.${HINT}`, T(cv(p[1]) - cv(p[0])), null, R`$\cos B-\cos A=2\sin\dfrac{A+B}2\sin\dfrac{A-B}2\approx${F(cv(p[1]) - cv(p[0]))}$.`); }],
-    [2, 4, function (r) { var p = r.pick(PAIRS); return Q(R`გამოთვალე $\sin${p[0]}^\circ\cos${p[1]}^\circ$ ნამრავლის ჯამად გარდაქმნით.${HINT}`, T(sv(p[0]) * cv(p[1])), null, R`$\sin A\cos B=\tfrac12[\sin(A+B)+\sin(A-B)]=\tfrac12[\sin${p[0] + p[1]}^\circ+\sin${p[0] - p[1]}^\circ]\approx${F(sv(p[0]) * cv(p[1]))}$.`); }],
-    [3, 4, function (r) { var p = r.pick(PAIRS); return Q(R`გამოთვალე $\cos${p[0]}^\circ\cos${p[1]}^\circ$.${HINT}`, T(cv(p[0]) * cv(p[1])), null, R`$\cos A\cos B=\tfrac12[\cos(A+B)+\cos(A-B)]\approx${F(cv(p[0]) * cv(p[1]))}$.`); }],
-    [3, 4, function (r) { var p = r.pick(PAIRS); return Q(R`გამოთვალე $\sin${p[0]}^\circ\sin${p[1]}^\circ$.${HINT}`, T(sv(p[0]) * sv(p[1])), null, R`$\sin A\sin B=\tfrac12[\cos(A-B)-\cos(A+B)]\approx${F(sv(p[0]) * sv(p[1]))}$.`); }],
-    [3, 4, function (r) { var p = r.pick([[75, 15], [105, 15], [50, 10], [70, 20]]); return Q(R`გამოთვალე $\dfrac{\sin${p[0]}^\circ+\sin${p[1]}^\circ}{\cos${p[0]}^\circ+\cos${p[1]}^\circ}$.${HINT}`, T(tv((p[0] + p[1]) / 2)), null, R`ფორმულებით შეფარდება $\operatorname{tg}\dfrac{A+B}{2}=\operatorname{tg}${(p[0] + p[1]) / 2}^\circ\approx${F(tv((p[0] + p[1]) / 2))}$.`); }],
-    [3, 3, function (r) { var a = r.pick([20, 40, 10]); return Q(R`გამოთვალე $\cos${60 + a}^\circ+\cos${60 - a}^\circ-\cos${a}^\circ$.${HINT}`, T(0), null, R`$\cos(60^\circ+a)+\cos(60^\circ-a)=2\cos60^\circ\cos a=\cos a$. სხვაობა $0$.`); }]
-  ]);
-
-  G("c1s9", [
-    [1, 5, function (r) { var a = r.i(2, 6), c = r.nz(-4, 4); return Q(R`იპოვე $y=${a}\sin x${sg(c)}$ ფუნქციის უდიდესი მნიშვნელობა.`, N(a + c), null, R`$\sin x$ მაქსიმუმი $1$-ია: $${a}+${c}=${a + c}$.`); }],
-    [1, 5, function (r) { var a = r.i(2, 6), c = r.nz(-4, 4); return Q(R`იპოვე $y=${a}\cos x${sg(c)}$ ფუნქციის უმცირესი მნიშვნელობა.`, N(-a + c), null, R`$\cos x$ მინიმუმი $-1$-ია: $-${a}+(${c})=${c - a}$.`); }],
-    [2, 5, function (r) { var k = r.i(2, 8); return Q(R`იპოვე $y=\sin(${k}x)$ ფუნქციის უმცირესი დადებითი პერიოდი.${HINT}`, T(2 * PI / k), R`$\dfrac{2\pi}{${k}}$`, R`$T=\dfrac{2\pi}{${k}}$.`); }],
-    [2, 5, function (r) { var a = r.i(2, 7), c = r.i(1, 5); return Q(R`იპოვე $y=${a}\cos x${sg(c)}$ ფუნქციის მნიშვნელობათა სიმრავლე.`, IV("[" + (c - a) + ";" + (c + a) + "]"), R`$[${c - a};\ ${c + a}]$`, R`$-1\le\cos x\le1$, ამიტომ $${c - a}\le y\le${c + a}$.`); }],
-    [2, 4, function (r) { var k = r.i(1, 5); return Q(R`რამდენი ნულია $y=\sin(${k}x)$ ფუნქციას $[0;\ 2\pi]$ მონაკვეთზე (ბოლოების ჩათვლით)?`, N(2 * k + 1), null, R`$${k}x=\pi n$, $x=\dfrac{\pi n}{${k}}$, $n=0,1,\dots,${2 * k}$ — სულ $${2 * k + 1}$.`); }],
-    [2, 4, function (r) { var k = r.i(1, 5); return Q(R`რამდენი ნულია $y=\cos(${k}x)$ ფუნქციას $[0;\ 2\pi]$ მონაკვეთზე?`, N(2 * k), null, R`$${k}x=\dfrac\pi2+\pi n$, $x=\dfrac{\pi(2n+1)}{${2 * k}}$, $n=0,\dots,${2 * k - 1}$ — სულ $${2 * k}$.`); }],
-    [3, 4, function (r) { var d = r.pick([[3, R`მარჯვნივ`], [4, R`მარჯვნივ`], [6, R`მარჯვნივ`], [3, R`მარცხნივ`], [4, R`მარცხნივ`], [6, R`მარცხნივ`]]); var right = d[1] === R`მარჯვნივ`; return Q(R`$y=\sin\left(x${right ? "-" : "+"}\dfrac\pi${d[0]}\right)$ ფუნქციის გრაფიკი მიიღება $y=\sin x$-ის გრაფიკიდან რომელი მიმართულებით გადაადგილებით? (ჩაწერე სიტყვით: „მარჯვნივ" ან „მარცხნივ")`, CH([R`მარჯვნივ`, R`მარცხნივ`], right ? 0 : 1), null, right ? R`$f(x-a)$ გრაფიკი $a$-თი მარჯვნივ გადაადგილდება.` : R`$f(x+a)$ გრაფიკი $a$-თი მარცხნივ გადაადგილდება.`); }],
-    [3, 4, function (r) { var w = r.pick([[R`$y=\sin x$ ზრდადია $[0;\ \pi/2]$-ზე`, 0], [R`$y=\cos x$ ზრდადია $[0;\ \pi]$-ზე`, 1], [R`$y=\cos x$ კლებადია $[0;\ \pi]$-ზე`, 0], [R`$y=\sin x$ კლებადია $[\pi/2;\ 3\pi/2]$-ზე`, 0], [R`$y=\sin x$ ზრდადია $[\pi/2;\ \pi]$-ზე`, 1], [R`$y=\operatorname{tg}x$ ზრდადია $(-\pi/2;\ \pi/2)$-ზე`, 0]]); return Q(R`ჭეშმარიტია თუ არა: ${w[0]}?`, CH([R`ჭეშმარიტია`, R`მცდარია`], w[1]), null, w[1] ? R`მტკიცება მცდარია.` : R`მტკიცება ჭეშმარიტია.`); }],
-    [3, 3, function (r) { var a = r.i(2, 5), b = r.i(2, 4); return Q(R`იპოვე $y=${a}\sin(${b}x)$ ფუნქციის უდიდესი მნიშვნელობა და პერიოდის ნამრავლი. (პერიოდი $\dfrac{2\pi}{${b}}$; ჩაწერე ნამრავლი)`, T(a * 2 * PI / b), R`$${F(2 * a / b)}\pi$`, R`უდიდესი მნიშვნელობა $${a}$, პერიოდი $\dfrac{2\pi}{${b}}$. ნამრავლი $\dfrac{${2 * a}\pi}{${b}}\approx${F(a * 2 * PI / b)}$.`); }]
-  ]);
-
   var IA = [[1, 2, 30, R`\frac12`], [-1, 2, -30, R`-\frac12`], [2, 2, 45, R`\frac{\sqrt2}2`], [3, 2, 60, R`\frac{\sqrt3}2`], [0, 1, 0, R`0`], [1, 1, 90, R`1`]];
-  G("c1s10", [
-    [1, 4, function (r) { var v = r.pick([[0.5, 30, R`\frac12`], [Math.SQRT1_2, 45, R`\frac{\sqrt2}2`], [Math.sqrt(3) / 2, 60, R`\frac{\sqrt3}2`], [0, 0, R`0`], [1, 90, R`1`]]); return Q(R`გამოთვალე $\arcsin${v[2]}$. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$\sin${v[1]}^\circ=${v[2]}$ და $${v[1]}^\circ\in[-90^\circ;90^\circ]$, ამიტომ $\arcsin${v[2]}=${piFr(v[1])}$.`); }],
-    [1, 4, function (r) { var v = r.pick([[R`\frac12`, 60], [R`\frac{\sqrt2}2`, 45], [R`\frac{\sqrt3}2`, 30], [R`0`, 90], [R`1`, 0]]); return Q(R`გამოთვალე $\arccos${v[0]}$. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$\cos${v[1]}^\circ=${v[0]}$, $${v[1]}^\circ\in[0;180^\circ]$, ამიტომ $\arccos${v[0]}=${piFr(v[1])}$.`); }],
-    [2, 5, function (r) { var v = r.pick([[R`1`, 45], [R`\sqrt3`, 60], [R`\frac{\sqrt3}3`, 30], [R`0`, 0]]); return Q(R`გამოთვალე $\operatorname{arctg}${v[0]}$. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$\operatorname{tg}${v[1]}^\circ=${v[0]}$, ამიტომ $\operatorname{arctg}${v[0]}=${piFr(v[1])}$.`); }],
-    [2, 5, function (r) { var v = r.pick([[R`-\frac12`, -30], [R`-\frac{\sqrt2}2`, -45], [R`-\frac{\sqrt3}2`, -60], [R`-1`, -90]]); return Q(R`გამოთვალე $\arcsin\left(${v[0]}\right)$. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$\arcsin(-x)=-\arcsin x$: $${piFr(v[1])}$.`); }],
-    [2, 5, function (r) { var v = r.pick([[R`-\frac12`, 120], [R`-\frac{\sqrt2}2`, 135], [R`-\frac{\sqrt3}2`, 150], [R`-1`, 180]]); return Q(R`გამოთვალე $\arccos\left(${v[0]}\right)$. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$\arccos(-x)=\pi-\arccos x$: $${piFr(v[1])}$.`); }],
-    [3, 4, function (r) { var t = r.pick(TRP); return Q(R`გამოთვალე $\sin\left(\arccos\dfrac{${t[0]}}{${t[2]}}\right)$.${HINT}`, T(t[1] / t[2]), R`$\dfrac{${t[1]}}{${t[2]}}$`, R`$\alpha=\arccos\dfrac{${t[0]}}{${t[2]}}$ მახვილია, $\sin\alpha=\sqrt{1-\dfrac{${t[0] * t[0]}}{${t[2] * t[2]}}}=\dfrac{${t[1]}}{${t[2]}}$.`); }],
-    [3, 4, function (r) { var t = r.pick(TRP); return Q(R`გამოთვალე $\operatorname{tg}\left(\arcsin\dfrac{${t[0]}}{${t[2]}}\right)$.${HINT}`, T(t[0] / t[1]), R`$\dfrac{${t[0]}}{${t[1]}}$`, R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$, $\cos\alpha=\dfrac{${t[1]}}{${t[2]}}$, $\operatorname{tg}\alpha=\dfrac{${t[0]}}{${t[1]}}$.`); }],
-    [3, 4, function (r) { var d = r.pick([[150, 30], [120, 60], [135, 45], [210, -30], [240, -60]]); return Q(R`გამოთვალე $\arcsin\left(\sin${d[0]}^\circ\right)$ (რადიანებში).${HINT}`, T(rad(d[1])), R`$${piFr(d[1])}$`, R`$\sin${d[0]}^\circ=\sin${d[1]}^\circ$ და $${d[1]}^\circ\in[-90^\circ;90^\circ]$, ამიტომ $${piFr(d[1])}$.`); }],
-    [3, 3, function (r) { var v = r.pick([[0.5, 30], [Math.SQRT1_2, 45], [Math.sqrt(3) / 2, 60]]); var tx = { 30: R`\frac12`, 45: R`\frac{\sqrt2}2`, 60: R`\frac{\sqrt3}2` }[v[1]]; return Q(R`გამოთვალე $\arcsin${tx}+\arccos${tx}$.${HINT}`, T(PI / 2), R`$\dfrac\pi2$`, R`ნებისმიერი $x\in[-1;1]$-ისთვის $\arcsin x+\arccos x=\dfrac\pi2$.`); }]
-  ]);
-
   function solN(kind, a) { /* number of solutions in [0, 2pi) */ if (kind === "sin" || kind === "cos") return Math.abs(a) > 1 + 1e-9 ? 0 : Math.abs(Math.abs(a) - 1) < 1e-9 ? 1 : 2; return 2; }
   var VALS = [[R`\frac12`, 0.5, 30], [R`-\frac12`, -0.5, -30], [R`\frac{\sqrt2}2`, Math.SQRT1_2, 45], [R`-\frac{\sqrt2}2`, -Math.SQRT1_2, -45], [R`\frac{\sqrt3}2`, Math.sqrt(3) / 2, 60], [R`-\frac{\sqrt3}2`, -Math.sqrt(3) / 2, -60], [R`0`, 0, 0], [R`1`, 1, 90], [R`-1`, -1, -90], [R`\frac32`, 1.5, null]];
-  G("c1s11", [
-    [1, 6, function (r) { var v = r.pick(VALS); return Q(R`რამდენი ამონახსნი აქვს $\sin x=${v[0]}$ განტოლებას $[0;\ 2\pi)$ შუალედში?`, N(solN("sin", v[1])), null, Math.abs(v[1]) > 1 ? R`$|\sin x|\le1$, ამიტომ ამონახსნი არ არსებობს.` : Math.abs(v[1]) === 1 ? R`ერთადერთი წერტილი სადაც სინუსი უკიდურეს მნიშვნელობას იღებს.` : R`წრეწირზე ორი წერტილია სასურველი ორდინატით.`); }],
-    [1, 5, function (r) { var v = r.pick(VALS); return Q(R`რამდენი ამონახსნი აქვს $\cos x=${v[0]}$ განტოლებას $[0;\ 2\pi)$ შუალედში?`, N(solN("cos", v[1])), null, Math.abs(v[1]) > 1 ? R`$|\cos x|\le1$, ამიტომ ამონახსნი არ არსებობს.` : Math.abs(v[1]) === 1 ? R`კოსინუსი უკიდურეს მნიშვნელობას ერთ წერტილში იღებს.` : R`წრეწირზე ორი წერტილია სასურველი აბსცისით.`); }],
-    [2, 5, function (r) { var v = r.pick([[R`\frac12`, 30], [R`\frac{\sqrt2}2`, 45], [R`\frac{\sqrt3}2`, 60]]); return Q(R`იპოვე $\sin x=${v[0]}$ განტოლების უმცირესი დადებითი ამონახსნი. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$x=\arcsin${v[0]}=${piFr(v[1])}$.`); }],
-    [2, 5, function (r) { var v = r.pick([[R`\frac12`, 60], [R`-\frac12`, 120], [R`\frac{\sqrt2}2`, 45], [R`-\frac{\sqrt2}2`, 135], [R`\frac{\sqrt3}2`, 30], [R`-\frac{\sqrt3}2`, 150]]); return Q(R`იპოვე $\cos x=${v[0]}$ განტოლების უმცირესი დადებითი ამონახსნი. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$x=\arccos${v[0]}=${piFr(v[1])}$.`); }],
-    [2, 4, function (r) { var v = r.pick([[R`1`, 45], [R`\sqrt3`, 60], [R`\frac{\sqrt3}3`, 30], [R`-1`, 135], [R`-\sqrt3`, 120]]); return Q(R`იპოვე $\operatorname{tg}x=${v[0]}$ განტოლების უმცირესი დადებითი ამონახსნი. (რადიანებში)${HINT}`, T(rad(v[1])), R`$${piFr(v[1])}$`, R`$x=\operatorname{arctg}${v[0]}+\pi n$; უმცირესი დადებითია $${piFr(v[1])}$.`); }],
-    [2, 4, function (r) { var v = r.pick([[R`\frac12`, 30], [R`\frac{\sqrt2}2`, 45], [R`\frac{\sqrt3}2`, 60]]); return Q(R`იპოვე $\sin x=${v[0]}$ განტოლების ორი ამონახსნის ჯამი $[0;\ 2\pi)$-ზე.${HINT}`, T(PI), R`$\pi$`, R`ამონახსნებია $${piFr(v[1])}$ და $\pi-${piFr(v[1])}$. ჯამი $\pi$.`); }],
-    [3, 4, function (r) { var k = r.i(2, 5); var v = r.pick([[R`\frac12`, 0.5], [R`\frac{\sqrt2}2`, Math.SQRT1_2], [R`-\frac{\sqrt3}2`, -Math.sqrt(3) / 2]]); return Q(R`რამდენი ამონახსნი აქვს $\sin(${k}x)=${v[0]}$ განტოლებას $[0;\ 2\pi)$ შუალედში?`, N(2 * k), null, R`$${k}x\in[0;\ ${2 * k}\pi)$, ეს $${k}$ სრული პერიოდია, თითოში $2$ ამონახსნი: $${2 * k}$.`); }],
-    [3, 4, function (r) { var th = r.pick([[30, R`\frac\pi6`], [45, R`\frac\pi4`], [60, R`\frac\pi3`]]); var n = r.i(1, 3); var x = (n % 2 ? -1 : 1) * rad(th[0]) + PI * n; return Q(R`$\sin x=\sin${th[0]}^\circ$ განტოლების ზოგადი ამონახსნია $x=(-1)^n\cdot${th[1]}+\pi n$. იპოვე $x$, როცა $n=${n}$.${HINT}`, T(x), null, R`$x=(-1)^{${n}}\cdot${th[1]}+${n}\pi\approx${F(x)}$.`); }],
-    [3, 4, function (r) { var th = r.pick([[30, R`\frac\pi6`], [45, R`\frac\pi4`], [60, R`\frac\pi3`]]); var n = r.i(1, 3), s = r.pick([1, -1]); var x = s * rad(th[0]) + 2 * PI * n; return Q(R`$\cos x=\cos${th[0]}^\circ$ განტოლების ზოგადი ამონახსნია $x=\pm${th[1]}+2\pi n$. იპოვე $x$, როცა $n=${n}$ და ნიშანი "${s > 0 ? "+" : "-"}".${HINT}`, T(x), null, R`$x=${s > 0 ? "" : "-"}${th[1]}+${2 * n}\pi\approx${F(x)}$.`); }],
-    [3, 3, function (r) { return Q(R`რამდენი ამონახსნი აქვს $\sin x=2$ განტოლებას?`, N(0), null, R`$|\sin x|\le1$, ამიტომ არც ერთი.`); }]
-  ]);
-
-  G("c1s12", [
-    [1, 4, function (r) { var v = r.pick([[R`\frac12`, 0.5], [R`-\frac12`, -0.5], [R`\frac{\sqrt2}2`, Math.SQRT1_2]]); return Q(R`რამდენი ამონახსნი აქვს $\sin^2x=${R`\frac14`}$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(4), null, R`$\sin x=\pm\frac12$, თითოეულს $2$ ამონახსნი: $4$.`); }],
-    [1, 4, function (r) { var a = r.pick([[0, R`\sin x`], [0, R`\cos x`]]); return Q(R`რამდენი ამონახსნი აქვს $\sin x\cos x=0$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(4), null, R`$\sin x=0$: $0,\pi$; $\cos x=0$: $\frac\pi2,\frac{3\pi}2$. სულ $4$.`); }],
-    [2, 5, function (r) { var R1 = r.pick([[1, 2], [-1, 2], [1, 1], [-1, 1], [0, 1]]), R2 = r.pick([[1, 2], [-1, 2], [1, 1], [-1, 1], [0, 1]]); if (R1[0] * R2[1] === R2[0] * R1[1]) return null; var p1 = R1[1], q1 = R1[0], p2 = R2[1], q2 = R2[0]; var a = p1 * p2, b = -(p1 * q2 + p2 * q1), c = q1 * q2; var v1 = q1 / p1, v2 = q2 / p2; var cnt = (Math.abs(v1) === 1 ? 1 : 2) + (Math.abs(v2) === 1 ? 1 : 2); var poly = (a === 1 ? "" : a) + "t^2" + (b === 0 ? "" : (b < 0 ? " - " : " + ") + (Math.abs(b) === 1 ? "" : Math.abs(b)) + "t") + (c === 0 ? "" : (c < 0 ? " - " : " + ") + Math.abs(c)); return Q(R`რამდენი ამონახსნი აქვს $${poly.replace(/t\^2/g, "\\sin^2x").replace(/t/g, "\\sin x")}=0$ განტოლებას $[0;\ 2\pi)$ შუალედში?`, N(cnt), null, R`ჩავსვათ $t=\sin x$: ფესვებია $t=${Fr(q1, p1)}$ და $t=${Fr(q2, p2)}$. ამონახსნების რაოდენობა: $${cnt}$.`); }],
-    [2, 5, function (r) { var R1 = r.pick([[1, 2], [-1, 2], [1, 1], [-1, 1], [0, 1]]), R2 = r.pick([[1, 2], [-1, 2], [1, 1], [-1, 1], [0, 1]]); if (R1[0] * R2[1] === R2[0] * R1[1]) return null; var p1 = R1[1], q1 = R1[0], p2 = R2[1], q2 = R2[0]; var a = p1 * p2, b = -(p1 * q2 + p2 * q1), c = q1 * q2; var v1 = q1 / p1, v2 = q2 / p2; var cnt = (Math.abs(v1) === 1 ? 1 : 2) + (Math.abs(v2) === 1 ? 1 : 2); var poly = (a === 1 ? "" : a) + "t^2" + (b === 0 ? "" : (b < 0 ? " - " : " + ") + (Math.abs(b) === 1 ? "" : Math.abs(b)) + "t") + (c === 0 ? "" : (c < 0 ? " - " : " + ") + Math.abs(c)); return Q(R`რამდენი ამონახსნი აქვს $${poly.replace(/t\^2/g, "\\cos^2x").replace(/t/g, "\\cos x")}=0$ განტოლებას $[0;\ 2\pi)$ შუალედში?`, N(cnt), null, R`ჩავსვათ $t=\cos x$: ფესვებია $t=${Fr(q1, p1)}$ და $t=${Fr(q2, p2)}$. ამონახსნების რაოდენობა: $${cnt}$.`); }],
-    [2, 4, function (r) { return Q(R`იპოვე $\sin x=\cos x$ განტოლების ორი ამონახსნის ჯამი $[0;\ 2\pi)$ შუალედში.${HINT}`, T(PI / 4 + 5 * PI / 4), R`$\dfrac{3\pi}2$`, R`$\operatorname{tg}x=1$: $x=\dfrac\pi4$ და $x=\dfrac{5\pi}4$. ჯამი $\dfrac{3\pi}2$.`); }],
-    [2, 4, function (r) { var k = r.pick([R`\sqrt3`, R`1`, R`\frac{\sqrt3}3`]); var vals = { "\\sqrt3": 60, "1": 45, "\\frac{\\sqrt3}3": 30 }; return Q(R`რამდენი ამონახსნი აქვს $\operatorname{tg}x=${k}$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(2), null, R`ტანგენსის პერიოდია $\pi$, ამიტომ $[0;2\pi)$-ზე ორი ამონახსნია.`); }],
-    [3, 4, function (r) { var a = r.pick([[1, R`\sin x=\cos x`, R`\sin^2x=\cos^2x`]]); return Q(R`რამდენი ამონახსნი აქვს $\sin^2x=\cos^2x$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(4), null, R`$\operatorname{tg}^2x=1$, ანუ $\operatorname{tg}x=\pm1$: $x=\frac\pi4,\frac{3\pi}4,\frac{5\pi}4,\frac{7\pi}4$.`); }],
-    [3, 4, function (r) { return Q(R`იპოვე $2\sin x\cos x=1$ განტოლების უმცირესი დადებითი ამონახსნი.${HINT}`, T(PI / 4), R`$\dfrac\pi4$`, R`$\sin2x=1$, $2x=\dfrac\pi2+2\pi n$, $x=\dfrac\pi4+\pi n$.`); }],
-    [3, 4, function (r) { var k = r.i(2, 4); return Q(R`რამდენი ამონახსნი აქვს $\cos(${k}x)=1$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(k), null, R`$${k}x=2\pi n$, $x=\dfrac{2\pi n}{${k}}$, $n=0,\dots,${k - 1}$.`); }],
-    [3, 3, function (r) { return Q(R`იპოვე $\cos2x=\dfrac12$ განტოლების ორი ამონახსნის ჯამი $[0;\ \pi]$ შუალედში.${HINT}`, T(PI), R`$\pi$`, R`$2x=\pm\dfrac\pi3+2\pi n$, $x=\dfrac\pi6$ და $\dfrac{5\pi}6$. ჯამი $\pi$.`); }]
-  ]);
-
   G("c1s13", [
     [1, 5, function (r) { var a = r.i(2, 14); return Q(R`სამკუთხედში $a=${a}$, $A=30^\circ$. იპოვე შემოხაზული წრის რადიუსი.`, N(a), null, R`$2R=\dfrac{a}{\sin A}=\dfrac{${a}}{1/2}=${2 * a}$, $R=${a}$.`); }],
     [1, 5, function (r) { var a = r.i(2, 14); return Q(R`სამკუთხედში $a=${a}$, $A=90^\circ$. იპოვე შემოხაზული წრის რადიუსი.`, N(a / 2), null, R`$R=\dfrac{a}{2\sin A}=\dfrac a2=${F(a / 2)}$.`); }],
@@ -7622,18 +7466,6 @@ P(3, R`<p>გამოთვალე და ჩაწერე სტანდ�
     [3, 4, function (r) { var a = r.i(4, 20), A = r.pick([30, 45, 60, 90]); return Q(R`სამკუთხედში $a=${a}$, $A=${A}^\circ$. იპოვე $2R$ (შემოხაზული წრის დიამეტრი).${HINT}`, T(a / sv(A)), null, R`$2R=\dfrac{a}{\sin A}\approx${F(a / sv(A))}$.`); }],
     [3, 4, function (r) { var w = r.pick([[R`ორი გვერდი და მათ შორის კუთხე`, 1], [R`სამივე გვერდი`, 1], [R`ორი კუთხე და ერთი გვერდი`, 0], [R`ორი გვერდი და მეორე გვერდის მოპირდაპირე კუთხე`, 0]]); var ans = r.pick([0, 1]); return Q(R`უცნობი გვერდის საპოვნელად რომელი თეორემა უნდა გამოიყენო, თუ ცნობილია: ${w[0]}?`, CH([R`კოსინუსთა თეორემა`, R`სინუსთა თეორემა`], w[1] ? 0 : 1), null, w[1] ? R`ამ მონაცემებით კოსინუსთა თეორემა გამოგვადგება.` : R`ამ მონაცემებით სინუსთა თეორემა გამოგვადგება.`); }],
     [3, 3, function (r) { var a = r.i(3, 12); return Q(R`ტოლგვერდა სამკუთხედის გვერდია $${a}$. იპოვე შემოხაზული წრის რადიუსი ($R=\dfrac{a}{2\sin60^\circ}$).${HINT}`, T(a / Math.sqrt(3)), R`$\dfrac{${a}\sqrt3}{3}$`, R`$R=\dfrac{${a}}{2\cdot\frac{\sqrt3}2}=\dfrac{${a}}{\sqrt3}\approx${F(a / Math.sqrt(3))}$.`); }]
-  ]);
-
-  G("c1s14", [
-    [1, 6, function (r) { var k = r.pick([[1, 6], [1, 4], [1, 3], [1, 2], [2, 3], [3, 4], [5, 6], [7, 6], [5, 4], [4, 3], [3, 2], [5, 3], [7, 4], [11, 6]]); var d = 180 * k[0] / k[1]; return Q(R`გამოთვალე $\sin\dfrac{${k[0]}\pi}{${k[1]}}$.${HINT}`, T(sv(d)), null, R`$\dfrac{${k[0]}\pi}{${k[1]}}=${d}^\circ$, $\sin${d}^\circ\approx${F(sv(d))}$.`); }],
-    [1, 5, function (r) { var k = r.pick([[1, 6], [1, 4], [1, 3], [2, 3], [3, 4], [5, 6], [7, 6], [5, 4], [4, 3], [5, 3], [7, 4], [11, 6]]); var d = 180 * k[0] / k[1]; return Q(R`გამოთვალე $\cos\dfrac{${k[0]}\pi}{${k[1]}}$.${HINT}`, T(cv(d)), null, R`$\dfrac{${k[0]}\pi}{${k[1]}}=${d}^\circ$, $\cos${d}^\circ\approx${F(cv(d))}$.`); }],
-    [2, 4, function (r) { var t = r.pick(TRP); return Q(R`$\sin\alpha=\dfrac{${t[0]}}{${t[2]}}$ ($\alpha$ მახვილია). იპოვე $\sin2\alpha$.${HINT}`, N(2 * t[0] * t[1] / (t[2] * t[2]), { tol: 0.005 }), null, R`$2\sin\alpha\cos\alpha=\dfrac{2\cdot${t[0]}\cdot${t[1]}}{${t[2] * t[2]}}$.`); }],
-    [2, 4, function (r) { var d = r.pick([15, 75, 105]); return Q(R`გამოთვალე $\sin${d}^\circ\cos${d}^\circ$.${HINT}`, T(0.5 * sv(2 * d)), null, R`$\tfrac12\sin${2 * d}^\circ\approx${F(0.5 * sv(2 * d))}$.`); }],
-    [2, 4, function (r) { var a = r.pick([[75, 15], [105, 15], [80, 40], [50, 10]]); return Q(R`გამოთვალე $\sin${a[0]}^\circ\cos${a[1]}^\circ+\cos${a[0]}^\circ\sin${a[1]}^\circ$.${HINT}`, T(sv(a[0] + a[1])), null, R`$\sin(${a[0]}^\circ+${a[1]}^\circ)=\sin${a[0] + a[1]}^\circ$.`); }],
-    [3, 4, function (r) { var v = r.pick([[R`\frac12`, 30], [R`\frac{\sqrt2}2`, 45], [R`\frac{\sqrt3}2`, 60]]); return Q(R`გამოთვალე $\arcsin${v[0]}+\arccos${v[0]}$.${HINT}`, T(PI / 2), null, R`$\arcsin x+\arccos x=\dfrac\pi2$.`); }],
-    [3, 4, function (r) { var k = r.i(2, 7); return Q(R`იპოვე $y=\cos(${k}x)$ ფუნქციის უმცირესი დადებითი პერიოდი.${HINT}`, T(2 * PI / k), null, R`$\dfrac{2\pi}{${k}}$.`); }],
-    [3, 4, function (r) { var t = r.pick([[3, 5, 7, 120], [5, 8, 7, 60], [7, 8, 13, 120], [7, 15, 13, 60]]); return Q(R`სამკუთხედში $a=${t[0]}$, $b=${t[1]}$, $C=${t[3]}^\circ$. იპოვე $c$.`, N(t[2]), null, R`კოსინუსთა თეორემა: $c=${t[2]}$.`); }],
-    [3, 3, function (r) { var v = r.pick([[R`\frac12`, 30], [R`\frac{\sqrt2}2`, 45], [R`\frac{\sqrt3}2`, 60]]); return Q(R`რამდენი ამონახსნი აქვს $\sin x=${v[0]}$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(2), null, R`$2$ ამონახსნი.`); }]
   ]);
 
   /* ---------- statistics ---------- */
@@ -7690,14 +7522,6 @@ P(3, R`<p>გამოთვალე და ჩაწერე სტანდ�
   var VT = { "0": R`0`, "1": R`1`, "-1": R`-1`, "0.5": R`\frac12`, "-0.5": R`-\frac12` };
   var VK = ["0", "1", "-1", "0.5", "-0.5"];
   function uni(a, b) { var o = a.slice(); b.forEach(function (x) { if (o.indexOf(x) < 0) o.push(x); }); return o; }
-  G("c1s12", [
-    [1, 3, function (r) { var v = r.pick([1, -1]); return Q(R`იპოვე $\sin x=${v}$ განტოლების ამონახსნი $[0;\ 2\pi)$-ზე. (რადიანებში)${HINT}`, T(v === 1 ? PI / 2 : 3 * PI / 2), R`$${v === 1 ? R`\frac\pi2` : R`\frac{3\pi}2`}$`, R`სინუსი $${v}$-ის ტოლია ერთეულოვანი წრეწირის ${v === 1 ? "ზედა" : "ქვედა"} წერტილში.`); }],
-    [1, 3, function (r) { var v = r.pick([0, 1]); return Q(R`რამდენი ამონახსნი აქვს $\operatorname{tg}x=${v}$ განტოლებას $[0;\ 4\pi)$-ზე?`, N(4), null, R`პერიოდი $\pi$, $[0;4\pi)$-ზე $4$ პერიოდია: $4$ ამონახსნი.`); }],
-    [2, 6, function (r) { var p = r.pick(VK), q = r.pick(VK); var u = uni(SS[p], CC[q]); return Q(R`რამდენი ამონახსნი აქვს $(\sin x-${VT[p] === "0" ? "0" : "(" + VT[p] + ")"})(\cos x-${VT[q] === "0" ? "0" : "(" + VT[q] + ")"})=0$ განტოლებას $[0;\ 2\pi)$ შუალედში?`, N(u.length), null, R`$\sin x=${VT[p]}$ აძლევს $${SS[p].length}$ ამონახსნს, $\cos x=${VT[q]}$ აძლევს $${CC[q].length}$-ს${u.length < SS[p].length + CC[q].length ? ", საერთო ამონახსნებს ერთხელ ვთვლით" : ""}. სულ $${u.length}$.`); }],
-    [2, 4, function (r) { var k = r.pick([R`\sin^2x=1`, R`\cos^2x=1`, R`\sin^2x=0`, R`\cos^2x=0`]); return Q(R`რამდენი ამონახსნი აქვს $${k}$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(k.indexOf("sin") >= 0 ? (k.indexOf("=1") >= 0 ? 2 : 2) : 2), null, R`ეს განტოლება ორ მნიშვნელობას ერთად იძლევა — თითოეული $\pm1$ ან $0$ წერტილებს ორ-ორს.`); }],
-    [3, 5, function (r) { var p = r.pick(VK), q = r.pick(VK); var u = uni(SS[p], CC[q]); var tot = u.reduce(function (a, b) { return a + b; }, 0); return Q(R`იპოვე $(\sin x-${VT[p] === "0" ? "0" : "(" + VT[p] + ")"})(\cos x-${VT[q] === "0" ? "0" : "(" + VT[q] + ")"})=0$ განტოლების ყველა ამონახსნის ჯამი $[0^\circ;\ 360^\circ)$-ზე (გრადუსებში).`, N(tot), null, R`ამონახსნებია $${u.sort(function (a, b) { return a - b; }).join("^\\circ,\\ ")}^\circ$. ჯამი $${tot}^\circ$.`); }],
-    [3, 3, function (r) { return Q(R`რამდენი ამონახსნი აქვს $2\cos^2x-1=0$ განტოლებას $[0;\ 2\pi)$-ზე?`, N(4), null, R`$\cos2x=0$, $2x=\dfrac\pi2+\pi n$, $x=\dfrac\pi4+\dfrac{\pi n}2$ — $[0;2\pi)$-ზე $4$ ამონახსნი.`); }]
-  ]);
 })();
 
 /* ===== grade 11, vectors (c3) and space geometry I (c4s1 - c4s5): generators ===== */

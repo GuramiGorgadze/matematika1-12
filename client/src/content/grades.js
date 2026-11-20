@@ -18,7 +18,7 @@ export const GRADES = [
 ];
 
 /** totals shown on the cover (checked against the curriculum by the content tests) */
-export const CATALOG = { grades: 12, lessons: 180, problems: 6423, exams: 9 };
+export const CATALOG = { grades: 12, lessons: 180, problems: 6933, exams: 9 };
 
 /** grades whose material comes from the original app (the rest is general sample material) */
 export const ORIGINAL_GRADES = new Set([7, 8, 11]);

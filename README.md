@@ -174,7 +174,17 @@ Implementation: `client/src/features/tests/presence.js` (with tests in `client/t
   `client/src/content/placeholders/`, is labelled **„ნიმუში"** in the UI, and is meant to be replaced:
   edit the lessons in place, or add real chapters and delete the placeholder ones.
 
-Totals: 12 grades · 180 lessons · 6,423 problems · 9 online exams.
+* **Grade 11, chapter I (trigonometry)** has its own generators in `client/src/content/pack/trig11.js`
+  (the old ones were removed from `core.js`). Every number answer there is **exact** — a fraction, a root or
+  a multiple of π (`√3/2`, `(√6+√2)/4`, `2π/3`); the checker rejects decimals and function calls such as
+  `sin(60)` for these keys (`exact: true`), and the practice card and the test input say so. Besides
+  computing values, about a third of the chapter is simplification and identities: choose the simplified
+  form, find the constant k that makes an identity true, decide whether an identity holds, simplify and
+  evaluate. The **triple-angle formulas (3α) and the sine/cosine theorems (lesson 1.13) are practice only**:
+  such problems carry `nt: 1` and are never drawn into the chapter test. Every identity in the banks is
+  checked numerically by `client/test/content.test.js`.
+
+Totals: 12 grades · 180 lessons · 6,933 problems · 9 online exams.
 
 ---
 

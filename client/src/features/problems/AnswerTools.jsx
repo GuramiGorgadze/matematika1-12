@@ -68,6 +68,9 @@ export function AnswerHelp({ className }) {
         </li>
         <li>ერთეულის დაწერა საჭირო არ არის (სმ, მ², °)</li>
         <li className="sm:col-span-2">
+          ტრიგონომეტრიაში (XI კლასი) პასუხი ზუსტი სახით იწერება: <code>√3/2</code>, <code>-1/2</code>, <code>(√6+√2)/4</code>, <code>2π/3</code> — ათწილადი არ ჩაითვლება
+        </li>
+        <li className="sm:col-span-2">
           გამოსახულება — როგორც რვეულში: <code>2x+3</code>, <code>(x-1)(x+1)</code>
         </li>
       </ul>

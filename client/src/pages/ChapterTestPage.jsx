@@ -115,7 +115,7 @@ function ChapterTest({ n, ch }) {
   function start(sz) {
     const now = Date.now();
     const min = minutesFor(sz);
-    const items = buildChapterTest(keyedProblems(ch), sz, now);
+    const items = buildChapterTest(keyedProblems(ch), sz, now, ch.testFocus || 0);
     rec.run = { clientId: newId("cht"), start: now, end: now + min * 60000, min, items, ans: {}, flag: {}, cur: 0, focus: emptyFocus() };
     commit();
     outbox.saveAttempt(rec.run.clientId, buildPing(rec.run));
@@ -278,7 +278,7 @@ function Running({ run, commit, title, kicker, onAsk, confirm, setConfirm, onFin
             {it.o ? (
               <ChoiceOptions options={it.o} value={run.ans[i] ?? null} onChange={(v) => setAns(v)} label="ვარიანტები" />
             ) : (
-              <WrittenAnswer key={i} value={run.ans[i] ?? ""} onChange={setAns} label={`შენი პასუხი, ამოცანა ${i + 1}`} onEnter={() => go(i + 1)} />
+              <WrittenAnswer key={i} value={run.ans[i] ?? ""} onChange={setAns} label={`შენი პასუხი, ამოცანა ${i + 1}`} onEnter={() => go(i + 1)} exact={!!p?.k?.exact} />
             )}
           </div>
         </section>

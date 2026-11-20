@@ -4,10 +4,19 @@ import { chapterProblemCount, CHK, CURR, keyedProblems, PBYID, PROBS, renderMath
 import { CATALOG, GRADES } from "../src/content/grades.js";
 import { EXAMS } from "../src/content/pack/exams.js";
 import { buildChapterTest, chapterAnswers, examAnswers, examMax, scoreChapter, scoreExam } from "../src/content/tests.js";
+import { FINDK, RS, SIMPLIFY, TRUTH } from "../src/content/pack/trig11.js";
+
+/** what a student types for a TeX answer: \dfrac{\sqrt{3}}{2} → ((sqrt(3))/(2)), \pi → pi */
+function texToInput(tex) {
+  let s = String(tex).replace(/^\$|\$$/g, "");
+  s = s.replace(/\\[dt]?frac\s*(\d)\s*(\d)/g, "(($1)/($2))").replace(/\\sqrt\s*(\d)/g, "sqrt($1)");
+  for (let i = 0; i < 4; i++) s = s.replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, "(($1)/($2))").replace(/\\sqrt\{([^{}]*)\}/g, "sqrt($1)");
+  return s.replace(/\\pi/g, "pi");
+}
 
 /** a string the checker should accept for a problem's own answer key */
 function correctInput(k) {
-  if (k.t === "num") return String(k.v);
+  if (k.t === "num") return k.exact ? texToInput(k.show) : String(k.v);
   if (k.t === "multi") return k.v.join("; ");
   if (k.t === "ch") return String(k.v);
   if (k.t === "expr") return k.v;
@@ -119,6 +128,75 @@ describe("grade 12 exams", () => {
       assert.equal(scoreExam(ex, answers, self, CHK).score, examMax(ex));
       const rows = examAnswers(ex, answers, s.results);
       assert.equal(rows.length, ex.items.length);
+    }
+  });
+});
+
+describe("grade 11 trigonometry (chapter I)", () => {
+  const ch = CURR[11].find((c) => c.id === "t1");
+  const pool = keyedProblems(ch).flat();
+  const pts = [[0.37, 0.21], [0.83, 0.52], [1.21, 0.33], [0.61, 1.07], [2.3, 0.9], [-0.7, 1.4]];
+  const same = (f, g) => pts.every(([a, b]) => { const x = f(a, b), y = g(a, b); return !isFinite(x) || !isFinite(y) || Math.abs(x - y) < 1e-9 * Math.max(1, Math.abs(y)); });
+
+  it("has a large test pool with many simplification and identity problems", () => {
+    assert.ok(pool.length >= 900, `pool ${pool.length}`);
+    const identity = pool.filter((p) => /გაამარტივე|იგივე|იგივურ/.test(p.q)).length;
+    assert.ok(identity >= 300, `simplification / identity problems: ${identity}`);
+  });
+
+  it("keeps the triple angle and the sine/cosine theorems out of the test", () => {
+    assert.ok(keyedProblems(ch)[ch.lessons.findIndex((l) => l.id === "c1s13")].length === 0, "lesson c1s13 is practice only");
+    for (const p of pool) assert.doesNotMatch(p.q + p.s, /3\\alpha|სამმაგ|სინუსთა|კოსინუსთა|შემოხაზულ/, p.id);
+  });
+
+  it("wants exact answers: the shown fraction / root / π form is accepted, a decimal is not", () => {
+    let n = 0;
+    for (const p of pool) {
+      if (p.k.t !== "num") continue;
+      n++;
+      assert.ok(p.k.exact, `${p.id} is exact`);
+      assert.doesNotMatch(p.a, /\{,\}|\d,\d/, `${p.id}: no decimal in the shown answer`);
+      assert.equal(CHK.check(texToInput(p.a), p.k), true, `${p.id}: ${p.a}`);
+      if (!Number.isInteger(p.k.v)) {
+        assert.equal(CHK.check(p.k.v.toFixed(3).replace(".", ","), p.k), false, `${p.id}: decimal rejected`);
+        assert.equal(CHK.rejectsInexact(p.k.v.toFixed(2), p.k), true);
+      }
+      for (const part of [p.q, p.a, p.s]) assert.equal(leftoverTex(part), null, `${p.id} renders: ${part}`);
+    }
+    assert.ok(n > 600, `${n} number answers`);
+    const k = { t: "num", v: Math.sqrt(3) / 2, exact: true };
+    for (const ok of ["√3/2", "sqrt(3)/2", "3/(2√3)", "√3:2"]) assert.equal(CHK.check(ok, k), true, ok);
+    for (const no of ["0,87", "0.866", "sin(60)", "sin(pi/3)"]) assert.equal(CHK.check(no, k), false, no);
+  });
+
+  it("every identity in the banks is true, every distractor is wrong", () => {
+    for (const [lid, bank] of Object.entries(SIMPLIFY))
+      for (const it of bank) {
+        const keys = [it[3], ...it[4]];
+        keys.forEach((key) => assert.ok(RS[key], `${lid}: form ${key}`));
+        assert.ok(same(it[2], RS[it[3]][1]), `${lid}: ${it[1]} = ${it[3]}`);
+        for (let i = 0; i < keys.length; i++) for (let j = i + 1; j < keys.length; j++) assert.ok(!same(RS[keys[i]][1], RS[keys[j]][1]), `${lid}: ${it[1]} options ${keys[i]} / ${keys[j]}`);
+      }
+    for (const [lid, bank] of Object.entries(FINDK))
+      for (const it of bank) {
+        const r = pts.map(([a, b]) => it[2](a, b) / it[3](a, b)).filter(isFinite);
+        assert.ok(r.every((x) => Math.abs(x - r[0]) < 1e-7), `${lid}: ${it[1]} has a constant k`);
+      }
+    const truths = Object.values(TRUTH).flat().map((it) => same(it[2], it[3]));
+    assert.ok(truths.filter(Boolean).length >= 10 && truths.filter((x) => !x).length >= 10, "both true and false identities");
+  });
+
+  it("builds tests from the new pool", () => {
+    for (const size of [20, 30, 50]) {
+      const t = buildChapterTest(keyedProblems(ch), size, 1000 + size, ch.testFocus);
+      assert.equal(t.length, size);
+      const share = t.filter((x) => PBYID[x.id].f).length / size;
+      assert.ok(share >= 0.35, `simplification / identity share ${share}`);
+      for (const item of t) {
+        const p = PBYID[item.id];
+        assert.ok(!p.nt, `${item.id} may be tested`);
+        if (item.o) assert.ok(item.o.every((o) => !/\{,\}/.test(o)), `${item.id}: no decimal options`);
+      }
     }
   });
 });

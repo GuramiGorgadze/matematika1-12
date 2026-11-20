@@ -192,9 +192,13 @@ export function ChoiceOptions({ options, value, onChange, review, correct, label
   );
 }
 
-export function WrittenAnswer({ value, onChange, label, onEnter, autoFocus }) {
+/* a decimal typed into a question that wants an exact answer (fraction, root, π) */
+const looksDecimal = (v) => /\d\s*[.,]\s*\d|[.,]\d/.test(String(v || ""));
+
+export function WrittenAnswer({ value, onChange, label, onEnter, autoFocus, exact }) {
   const ref = useRef(null);
   const insert = useInsert(ref, value || "", onChange);
+  const warn = exact && looksDecimal(value);
   return (
     <div className="grid gap-3">
       <label className="flex max-w-md items-end gap-3">
@@ -214,6 +218,13 @@ export function WrittenAnswer({ value, onChange, label, onEnter, autoFocus }) {
           className="h-11 rounded-none border-0 border-b-[1.5px] border-foreground/35 bg-transparent px-1 font-mathtext text-[1.1875rem] shadow-none hover:border-foreground/60 focus:border-accent focus:shadow-[0_1.5px_0_0_var(--accent)] focus:ring-0"
         />
       </label>
+      {exact && (
+        <p className={cn("text-sm", warn ? "font-semibold text-warning-foreground" : "text-subtle-foreground")} role={warn ? "alert" : undefined}>
+          {warn
+            ? "ათწილადი არ ჩაითვლება — ჩაწერე წილადით ან ფესვით (მაგ. √3/2, -1/2, 2π/3)."
+            : "პასუხი ჩაწერე ზუსტი სახით: წილადით, ფესვით ან π-ით — ათწილადი არ ჩაითვლება."}
+        </p>
+      )}
       <SymbolBar onInsert={insert} />
       <AnswerHelp />
     </div>
